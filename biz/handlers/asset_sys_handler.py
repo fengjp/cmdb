@@ -18,6 +18,18 @@ from libs.mysql_conn import MysqlBase
 import urllib
 from settings import onlinePreview
 
+SOFT_TYPE = {
+    '1': '操作系统',
+    '2': '虚拟化',
+    '3': '数据库',
+    '4': '服务',
+    '5': '中间件',
+    '6': '应用服务',
+    '7': 'Web服务',
+    '8': '其他'
+}
+
+
 def getPreviewUrl(request, url):
     url = urllib.parse.quote_plus(url)
     onlinePreviewurl = onlinePreview.format(request.host_name)
@@ -189,7 +201,8 @@ class SysHandler(BaseHandler):
 
         with DBContext('w', None, True) as session:
             session.query(Sys).filter(Sys.id == sys_id).update({
-                Sys.sys_name: sys_name, Sys.sys_version: sys_version, Sys.sys_info: sys_info, Sys.online_time: online_time,
+                Sys.sys_name: sys_name, Sys.sys_version: sys_version, Sys.sys_info: sys_info,
+                Sys.online_time: online_time,
                 Sys.development_phone: development_phone, Sys.development_contact: development_contact,
                 Sys.development: development, Sys.uploadList: json.dumps(uploadList),
             }, synchronize_session=False)
@@ -384,7 +397,8 @@ class SysUpLoadFileHandler(BaseHandler):
 
 class TreeHandler(BaseHandler):
     def get(self, *args, **kwargs):
-        # nickname = self.get_current_nickname()
+        isMonitor = self.get_argument('isMonitor', default=None)
+
         _tree = [{
             "expand": True,
             "title": '应用系统',
@@ -398,14 +412,40 @@ class TreeHandler(BaseHandler):
                 sys_dict = {}
                 # sys_dict['expand'] = True
                 soft_tags_count = session.query(SysSoft).filter(SysSoft.sys_id == msg.id).count()
-                # soft_tags = session.query(SysSoft).filter(SysSoft.sys_id == msg.id).all()
+                soft_tags = session.query(SysSoft).filter(SysSoft.sys_id == msg.id).all()
                 # sys_dict['the_len'] = len(soft_tags)
                 sys_dict['title'] = msg.sys_name + ' ({})'.format(soft_tags_count)
                 sys_dict['tag_name'] = msg.sys_name
                 sys_dict['sys_id'] = msg.id
+
+                if isMonitor:
+                    sys_dict['children'] = []
+                    # soft_tags = session.query(SysSoft.soft_type).filter(SysSoft.sys_id == msg.id).group_by(SysSoft.soft_type)
+                    soft_tags_Obj = {}
+                    for soft_m in soft_tags:
+                        soft_type = str(soft_m.soft_type)
+                        if soft_type not in soft_tags_Obj:
+                            soft_tags_Obj[soft_type] = []
+                        soft_tags_Obj[soft_type].append(soft_m.soft_ip)
+
+                    # ins_log.read_log('info', soft_tags_Obj)
+                    for soft_type, soft_ips in soft_tags_Obj.items():
+                        soft_dict = {}
+                        soft_dict['title'] = SOFT_TYPE[soft_type]
+                        soft_dict['type'] = soft_type
+                        soft_dict['children'] = []
+                        for ip in soft_ips:
+                            _d = {}
+                            _d['title'] = ip
+                            _d['type'] = soft_type
+                            soft_dict['children'].append(_d)
+
+                        sys_dict['children'].append(soft_dict)
+
                 _tree[0]["children"].append(sys_dict)
 
         self.write(dict(code=0, msg='获取成功', data=_tree))
+
 
 sys_urls = [
     (r"/v1/cmdb/sys/", SysHandler),

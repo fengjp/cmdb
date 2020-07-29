@@ -310,9 +310,9 @@ if __name__ == '__main__':
         }
     }
 
-    asb = MyAnsiable2(connection='smart', hostsresource=temphosts_dict)
+    asb = MyAnsiable2(connection='smart', hostsresource=hostsresource)
     # asb.run(hosts="test", module="shell", args='df -m')
-    asb.run(hosts="test", module="ping", args='')
+    asb.run(hosts="39.104.83.140", module="shell", args='df -m')
 
     stdout_dict = json.loads(asb.get_result())
     print(stdout_dict)
