@@ -40,7 +40,7 @@ class ResultCallback(CallbackBase):
         self.host_failed[result._host.get_name()] = result
 
 
-class MyAnsiable2():
+class AnsiableAPI():
     def __init__(self,
                  connection='local',  # 连接方式 local 本地方式，smart ssh方式
                  remote_user=None,  # ssh 用户
@@ -302,6 +302,7 @@ class MyInventory:
 
 
 if __name__ == '__main__':
+    import time
     hostsresource = [{"ip": "39.104.83.140", "port": "22", "username": "root", "password": "asdqwe123."}]
     temphosts_dict = {
         "test": {
@@ -309,11 +310,10 @@ if __name__ == '__main__':
             "vars": {}
         }
     }
-
-    asb = MyAnsiable2(connection='smart', hostsresource=hostsresource)
-    # asb.run(hosts="test", module="shell", args='df -m')
-    asb.run(hosts="39.104.83.140", module="shell", args='df -m')
-
+    print('----------',time.time())
+    asb = AnsiableAPI(connection='smart', hostsresource=hostsresource)
+    # asb.run(hosts="39.104.83.140", module="shell", args='df -m')
+    asb.run(hosts="39.104.83.140", module="setup", args='')
     stdout_dict = json.loads(asb.get_result())
-    print(stdout_dict)
+    print('##########', time.time())
 

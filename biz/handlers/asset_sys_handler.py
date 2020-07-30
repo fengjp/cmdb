@@ -8,6 +8,7 @@ import json
 from libs.base_handler import BaseHandler
 from sqlalchemy import or_, and_
 from models.sys import Sys, model_to_dict, SysSoft, SysUpgrade, SysManager
+from models.server import Server
 from models.software import soft_type_dict
 from websdk.db_context import DBContext
 from websdk.web_logs import ins_log
@@ -150,7 +151,7 @@ class SysHandler(BaseHandler):
                 soft_name = soft['soft_type_name'][1]
                 new_sys_soft = SysSoft(
                     soft_name=soft_name, soft_type=soft_type, soft_version=soft['soft_version'],
-                    soft_ip=soft['soft_ip'],
+                    soft_ip=soft['soft_ip'], soft_hostname=soft['soft_hostname'],
                     soft_usage=soft['soft_usage'], sys_id=sys_id,
                 )
                 session.add(new_sys_soft)
@@ -217,11 +218,12 @@ class SysHandler(BaseHandler):
                     session.query(SysSoft).filter(SysSoft.id == soft_id).update({
                         SysSoft.soft_name: soft_name, SysSoft.soft_type: soft_type, SysSoft.soft_ip: soft['soft_ip'],
                         SysSoft.soft_usage: soft['soft_usage'], SysSoft.soft_version: soft['soft_version'],
+                        SysSoft.soft_hostname: soft['soft_hostname'],
                     }, synchronize_session=False)
                 else:
                     new_sys_soft = SysSoft(
                         soft_name=soft_name, soft_type=soft_type, soft_version=soft['soft_version'],
-                        soft_ip=soft['soft_ip'],
+                        soft_ip=soft['soft_ip'], soft_hostname=soft['soft_hostname'],
                         soft_usage=soft['soft_usage'], sys_id=sys_id,
                     )
                     session.add(new_sys_soft)
@@ -398,7 +400,6 @@ class SysUpLoadFileHandler(BaseHandler):
 class TreeHandler(BaseHandler):
     def get(self, *args, **kwargs):
         isMonitor = self.get_argument('isMonitor', default=None)
-
         _tree = [{
             "expand": True,
             "title": '应用系统',
@@ -420,7 +421,6 @@ class TreeHandler(BaseHandler):
 
                 if isMonitor:
                     sys_dict['children'] = []
-                    # soft_tags = session.query(SysSoft.soft_type).filter(SysSoft.sys_id == msg.id).group_by(SysSoft.soft_type)
                     soft_tags_Obj = {}
                     for soft_m in soft_tags:
                         soft_type = str(soft_m.soft_type)
@@ -431,7 +431,7 @@ class TreeHandler(BaseHandler):
                     # ins_log.read_log('info', soft_tags_Obj)
                     for soft_type, soft_ips in soft_tags_Obj.items():
                         soft_dict = {}
-                        soft_dict['title'] = SOFT_TYPE[soft_type]
+                        soft_dict['title'] = SOFT_TYPE[soft_type] + ' ({})'.format(len(soft_ips))
                         soft_dict['type'] = soft_type
                         soft_dict['children'] = []
                         for ip in soft_ips:
@@ -447,9 +447,34 @@ class TreeHandler(BaseHandler):
         self.write(dict(code=0, msg='获取成功', data=_tree))
 
 
+class SerHostHandler(BaseHandler):
+    def get(self, *args, **kwargs):
+        key = self.get_argument('key', default=None, strip=True)
+        value = self.get_argument('value', default=None, strip=True)
+        page_size = self.get_argument('page', default=1)
+        limit = self.get_argument('limit', default="999", strip=True)
+        limit_start = (int(page_size) - 1) * int(limit)
+        hostIp_list = []
+        try:
+            with DBContext('r') as session:
+                serObj = session.query(Server).all()
+
+                for msg in serObj:
+                    data_dict = {}
+                    data_dict['host'] = msg.hostname
+                    data_dict['ip'] = msg.ip
+                    hostIp_list.append(data_dict)
+
+        except Exception as e:
+            ins_log.read_log('error:', '{err}'.format(err=e))
+
+        self.write(dict(code=0, msg='获取成功', data=hostIp_list))
+
+
 sys_urls = [
     (r"/v1/cmdb/sys/", SysHandler),
     (r"/v1/cmdb/sys_update/", SysUpdateHandler),
     (r"/v1/cmdb/sys/upload/", SysUpLoadFileHandler),
     (r"/v1/cmdb/sys_tree/", TreeHandler),
+    (r"/v1/cmdb/ser_host/", SerHostHandler),
 ]

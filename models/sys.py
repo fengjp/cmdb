@@ -43,6 +43,7 @@ class SysSoft(Base):
     soft_type = Column('soft_type', Integer)  # 软件类型
     soft_version = Column('soft_version', String(50))  # 版本号
     soft_ip = Column('soft_ip', String(50))  # IP
+    soft_hostname = Column('soft_hostname', String(50))  # 主机名
     soft_usage = Column('soft_usage', String(50))  # 用途
     sys_id = Column('sys_id', Integer, index=True)  # 关联的系统ID
 
