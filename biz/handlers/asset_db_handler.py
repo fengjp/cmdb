@@ -12,16 +12,19 @@ from websdk.db_context import DBContext
 from websdk.web_logs import ins_log
 from libs.mysql_conn import MysqlBase
 from settings import READONLY_DB_DBNAME
+from libs.aes_coder import encrypt, decrypt
 
 
 def mysqlConnTest(data_dict):
     ############# 监测数据库连接情况，后续放着定时任务里面# ############
     try:
+        # 解密密码
+        db_pwd = decrypt(data_dict['db_pwd'])
         db_conf = {
             'host': data_dict['db_host'],
             'port': int(data_dict['db_port']),
             'user': data_dict['db_user'],
-            'passwd': data_dict['db_pwd'],
+            'passwd': db_pwd,
             'db': READONLY_DB_DBNAME
         }
         mysql_conn = MysqlBase(**db_conf)
@@ -64,8 +67,12 @@ class DBHandler(BaseHandler):
                     for t in db_tags:
                         tag_list.append(t[0])
                     data_dict['tag_list'] = tag_list
-
                     db_list.append(data_dict)
+
+                    # 测试mysql连接
+                    if data_dict['db_type'] == 'mysql':
+                        mysqlConnTest(data_dict)
+
                 return self.write(dict(code=0, msg='获取成功', count=count, data=db_list))
 
             ### 监听搜索
@@ -238,6 +245,9 @@ class DBHandler(BaseHandler):
         if exist_id:
             return self.write(dict(code=-2, msg='不要重复记录'))
 
+        # 加密密码
+        db_pwd = encrypt(db_pwd)
+
         with DBContext('w', None, True) as session:
             new_db = DB(db_code=db_code, db_host=db_host, db_port=db_port, db_user=db_user, db_pwd=db_pwd,
                         db_env=db_env, proxy_host=proxy_host, db_type=db_type, db_version=db_version, db_mark=db_mark,
@@ -279,6 +289,9 @@ class DBHandler(BaseHandler):
         db_detail = data.get('db_detail', None)
         if not db_id or not db_code or not db_host or not db_port or not db_user:
             return self.write(dict(code=-1, msg='关键参数不能为空'))
+
+        # 加密密码
+        db_pwd = encrypt(db_pwd)
 
         with DBContext('w', None, True) as session:
             all_tags = session.query(Tag.id).filter(Tag.tag_name.in_(tag_list)).order_by(Tag.id).all()
@@ -431,10 +444,41 @@ class DBForQryHandler(BaseHandler):
         self.write(dict(code=0, msg='获取成功', count=count, data=db_list))
 
 
+class TreeHandler(BaseHandler):
+    def get(self, *args, **kwargs):
+        nickname = self.get_current_nickname()
+        _tree = [{
+            "expand": True,
+            "title": 'root',
+            "children": [
+            ]
+        }]
+
+        with DBContext('r', None, True) as session:
+            if self.is_superuser:
+                # TODO 超管看所有Tag Tree
+                db_tags = session.query(Tag).order_by(Tag.id).all()
+            else:
+                # TODO 普通用户看有权限的TAG Tree
+                db_tags = session.query(Tag).order_by(Tag.id).filter(Tag.users.like('%{}%'.format(nickname)))
+            for msg in db_tags:
+                db_dict = {}
+                db_tags = session.query(DBTag.id).outerjoin(DB, DB.id == DBTag.db_id).filter(
+                    DBTag.tag_id == msg.id).all()
+                db_dict['the_len'] = len(db_tags)
+                db_dict['title'] = msg.tag_name + ' ({})'.format(len(db_tags))
+                db_dict['tag_name'] = msg.tag_name
+                db_dict['node'] = 'root'
+                _tree[0]["children"].append(db_dict)
+
+        self.write(dict(code=0, msg='获取成功', data=_tree))
+
+
 asset_db_urls = [
     (r"/v1/cmdb/db/", DBHandler),
     (r"/v1/cmdb/db/multi_add/", MultiAddDBHandler),
     (r"/v1/cmdb/db/forQry/", DBForQryHandler),
+    (r"/v1/cmdb/db/tree/", TreeHandler),
 ]
 if __name__ == "__main__":
     pass

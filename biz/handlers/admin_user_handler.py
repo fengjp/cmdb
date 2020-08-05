@@ -8,6 +8,7 @@ import json
 from libs.base_handler import BaseHandler
 from models.server import AdminUser, model_to_dict
 from websdk.db_context import DBContext
+from libs.aes_coder import encrypt, decrypt
 
 
 class AdminUserHandler(BaseHandler):
@@ -31,7 +32,6 @@ class AdminUserHandler(BaseHandler):
         for data in admin_user_data:
             data_dict = model_to_dict(data)
             data_dict['update_time'] = str(data_dict['update_time'])
-            data_dict['password'] = ''
             admin_user_list.append(data_dict)
         return self.write(dict(code=0, msg='获取成功', count=count, data=admin_user_list))
 
@@ -45,6 +45,9 @@ class AdminUserHandler(BaseHandler):
 
         if not admin_user or not system_user or not user_key:
             return self.write(dict(code=-2, msg='关键参数不能为空'))
+
+        # 加密密码
+        password = encrypt(password)
 
         with DBContext('r') as session:
             exist_id = session.query(AdminUser.id).filter(AdminUser.admin_user == admin_user).first()
@@ -73,6 +76,9 @@ class AdminUserHandler(BaseHandler):
 
         if not admin_user or not system_user or not user_key:
             return self.write(dict(code=-2, msg='关键参数不能为空'))
+
+        # 加密密码
+        password = encrypt(password)
 
         update_info = {
             "admin_user": admin_user,
