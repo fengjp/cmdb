@@ -290,8 +290,12 @@ class DBHandler(BaseHandler):
         if not db_id or not db_code or not db_host or not db_port or not db_user:
             return self.write(dict(code=-1, msg='关键参数不能为空'))
 
-        # 加密密码
-        db_pwd = encrypt(db_pwd)
+        with DBContext('r') as session:
+            old_password = session.query(DB.db_pwd).filter(DB.id == int(db_id)).first()[0]
+
+        if old_password != db_pwd:
+            # 加密密码
+            db_pwd = encrypt(db_pwd)
 
         with DBContext('w', None, True) as session:
             all_tags = session.query(Tag.id).filter(Tag.tag_name.in_(tag_list)).order_by(Tag.id).all()

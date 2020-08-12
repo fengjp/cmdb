@@ -77,8 +77,12 @@ class AdminUserHandler(BaseHandler):
         if not admin_user or not system_user or not user_key:
             return self.write(dict(code=-2, msg='关键参数不能为空'))
 
-        # 加密密码
-        password = encrypt(password)
+        with DBContext('r') as session:
+            old_password = session.query(AdminUser.password).filter(AdminUser.id == admin_user_id).first()[0]
+
+        if old_password != password:
+            # 加密密码
+            password = encrypt(password)
 
         update_info = {
             "admin_user": admin_user,
