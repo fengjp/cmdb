@@ -35,6 +35,7 @@ class DB(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     idc = Column('idc', String(128))  # IDC
     db_instance_id = Column('db_instance_id', String(128))  #RDS实例ID
+    db_instance = Column('db_instance', String(128))  #库名/实例
     db_code = Column('db_code', String(255))  ### 名称 代号 编码
     db_class = Column('db_class', String(255))  ### DB实例类型
     db_host = Column('db_host', String(255), nullable=False) ### DB主机地址

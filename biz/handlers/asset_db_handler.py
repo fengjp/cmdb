@@ -70,8 +70,8 @@ class DBHandler(BaseHandler):
                     db_list.append(data_dict)
 
                     # 测试mysql连接
-                    if data_dict['db_type'] == 'mysql':
-                        mysqlConnTest(data_dict)
+                    # if data_dict['db_type'] == 'mysql':
+                    #     mysqlConnTest(data_dict)
 
                 return self.write(dict(code=0, msg='获取成功', count=count, data=db_list))
 
@@ -151,9 +151,9 @@ class DBHandler(BaseHandler):
                         tag_list.append(t[0])
                     data_dict['tag_list'] = tag_list
 
-                    # 测试mysql连接
-                    if data_dict['db_type'] == 'mysql':
-                        mysqlConnTest(data_dict)
+                    # # 测试mysql连接
+                    # if data_dict['db_type'] == 'mysql':
+                    #     mysqlConnTest(data_dict)
 
                     db_list.append(data_dict)
 
@@ -211,8 +211,8 @@ class DBHandler(BaseHandler):
                 data_dict['tag_list'] = tag_list
 
                 # 测试mysql连接
-                if data_dict['db_type'] == 'mysql':
-                    mysqlConnTest(data_dict)
+                # if data_dict['db_type'] == 'mysql':
+                #     mysqlConnTest(data_dict)
 
                 db_list.append(data_dict)
 
@@ -233,6 +233,7 @@ class DBHandler(BaseHandler):
         db_mark = data.get('db_mark', '写')
         tag_list = data.get('tag_list', [])
         db_detail = data.get('db_detail', None)
+        db_instance = data.get('db_instance', '')
         if not db_code or not db_host or not db_port or not db_user:
             return self.write(dict(code=-1, msg='关键参数不能为空'))
 
@@ -251,7 +252,7 @@ class DBHandler(BaseHandler):
         with DBContext('w', None, True) as session:
             new_db = DB(db_code=db_code, db_host=db_host, db_port=db_port, db_user=db_user, db_pwd=db_pwd,
                         db_env=db_env, proxy_host=proxy_host, db_type=db_type, db_version=db_version, db_mark=db_mark,
-                        db_detail=db_detail)
+                        db_detail=db_detail, db_instance=db_instance)
             session.add(new_db)
 
             all_tags = session.query(Tag.id).filter(Tag.tag_name.in_(tag_list)).order_by(Tag.id).all()
@@ -287,6 +288,7 @@ class DBHandler(BaseHandler):
         idc = data.get('idc', None)
         tag_list = data.get('tag_list', [])
         db_detail = data.get('db_detail', None)
+        db_instance = data.get('db_instance', '')
         if not db_id or not db_code or not db_host or not db_port or not db_user:
             return self.write(dict(code=-1, msg='关键参数不能为空'))
 
@@ -309,7 +311,9 @@ class DBHandler(BaseHandler):
                                                                   DB.db_pwd: db_pwd, DB.db_env: db_env,
                                                                   DB.proxy_host: proxy_host, DB.db_type: db_type,
                                                                   DB.db_version: db_version, DB.idc: idc,
-                                                                  DB.db_mark: db_mark, DB.db_detail: db_detail})
+                                                                  DB.db_mark: db_mark, DB.db_detail: db_detail,
+                                                                  DB.db_instance: db_instance
+                                                                  })
         # 记录操作,不成功直接Pass
         try:
             modify_data = data
