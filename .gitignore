@@ -108,3 +108,4 @@ ENV/
 .idea
 pm2.json
 cmdb.conf
+.DS_Store
