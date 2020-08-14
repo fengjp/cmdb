@@ -34,7 +34,7 @@ SOFT_TYPE = {
 def getPreviewUrl(request, url):
     url = urllib.parse.quote_plus(url)
     onlinePreviewurl = onlinePreview.format(request.host_name)
-    viewUrl = '{0}{1}&officePreviewType=pdf'.format(onlinePreviewurl, url)
+    viewUrl = '{0}{1}'.format(onlinePreviewurl, url)
     return viewUrl
 
 
@@ -75,7 +75,7 @@ class SysHandler(BaseHandler):
                     data_dict['uploadList'] = json.loads(str(data_dict['uploadList']))
                     # data_dict['uploadList']['url'] = getPreviewUrl(self.request, data_dict['uploadList']['url'])
                     for i in data_dict['uploadList']:
-                        i['url'] = getPreviewUrl(self.request, i['url'])
+                        i['url'] = getPreviewUrl(self.request, i['response']['url'])
                 else:
                     data_dict['uploadList'] = []
 

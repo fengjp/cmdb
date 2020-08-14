@@ -43,7 +43,7 @@ class AdminUserHandler(BaseHandler):
         user_key = data.get('user_key', None)
         remarks = data.get('remarks', None)
 
-        if not admin_user or not system_user or not user_key:
+        if not admin_user or not system_user:
             return self.write(dict(code=-2, msg='关键参数不能为空'))
 
         # 加密密码
