@@ -58,6 +58,15 @@ class SysManager(Base):
     sys_id = Column('sys_id', Integer, index=True)  # 关联的系统ID
 
 
+class SysUrl(Base):
+    __tablename__ = 'asset_sys_url'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    sys_url_na = Column('sys_url_na', String(50))  # 名称
+    sys_url = Column('sys_url', String(255))  # URL
+    sys_id = Column('sys_id', Integer, index=True)  # 关联的系统ID
+
+
 class SysUpgrade(Base):
     __tablename__ = 'asset_sys_upgrade'
 

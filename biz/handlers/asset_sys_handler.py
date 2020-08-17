@@ -7,7 +7,7 @@
 import json
 from libs.base_handler import BaseHandler
 from sqlalchemy import or_, and_
-from models.sys import Sys, model_to_dict, SysSoft, SysUpgrade, SysManager
+from models.sys import Sys, model_to_dict, SysSoft, SysUpgrade, SysManager, SysUrl
 from models.server import Server
 from models.software import soft_type_dict
 from websdk.db_context import DBContext
@@ -69,8 +69,8 @@ class SysHandler(BaseHandler):
             for msg in all_sys:
                 data_dict = model_to_dict(msg)
                 data_dict['online_time'] = str(data_dict['online_time'])
-                soft_list = session.query(SysSoft).filter(SysSoft.sys_id == data_dict['id']).all()
-                data_dict['soft_list'] = []
+
+                # 上传附件列表
                 if data_dict['uploadList'] and data_dict['uploadList'] != 'null':
                     data_dict['uploadList'] = json.loads(str(data_dict['uploadList']))
                     # data_dict['uploadList']['url'] = getPreviewUrl(self.request, data_dict['uploadList']['url'])
@@ -79,18 +79,30 @@ class SysHandler(BaseHandler):
                 else:
                     data_dict['uploadList'] = []
 
+                # 组件列表
+                soft_list = session.query(SysSoft).filter(SysSoft.sys_id == data_dict['id']).all()
+                data_dict['soft_list'] = []
                 for soft in soft_list:
                     soft_dict = model_to_dict(soft)
                     soft_dict['soft_type_name'] = [int(soft_dict['soft_type']), soft_dict['soft_name']]
                     soft_dict['soft_type'] = soft_type_dict.get(soft_dict['soft_type'], soft_dict['soft_type'])
                     data_dict['soft_list'].append(soft_dict)
 
+                # 负责人列表
                 sys_manager_list = session.query(SysManager).filter(SysManager.sys_id == data_dict['id']).all()
                 data_dict['sys_manager_list'] = []
                 for sys_mg in sys_manager_list:
                     sys_mg_dict = model_to_dict(sys_mg)
                     data_dict['sys_manager_list'].append(sys_mg_dict)
 
+                # url列表
+                data_dict['sys_url_list'] = []
+                sys_url_list = session.query(SysUrl).filter(SysUrl.sys_id == data_dict['id']).all()
+                for sys_url in sys_url_list:
+                    sys_url_dict = model_to_dict(sys_url)
+                    data_dict['sys_url_list'].append(sys_url_dict)
+
+                # 文档列表
                 select_docx_sql = 'select f_name, f_url from pb_docxs where sysID = {}'.format(data_dict['id'])
                 sys_docx_list = mysql_conn.query(select_docx_sql)
                 # ins_log.read_log('info', sys_docx_list)
@@ -120,6 +132,7 @@ class SysHandler(BaseHandler):
         development = data.get('development')
         soft_list = data.get('soft_list')
         sys_manager_list = data.get('sys_manager_list')
+        sys_url_list = data.get('sys_url_list')
         uploadList = data.get('uploadList')
 
         if not sys_name:
@@ -173,6 +186,18 @@ class SysHandler(BaseHandler):
                 session.add(new_sys_soft)
             session.commit()
 
+        with DBContext('w', None, True) as session:
+            for url_obj in sys_url_list:
+                sys_url_na = url_obj['sys_url_na']
+                sys_url = url_obj['sys_url']
+                new_sys_url = SysUrl(
+                    sys_url_na=sys_url_na,
+                    sys_url=sys_url,
+                    sys_id=sys_id,
+                )
+                session.add(new_sys_url)
+            session.commit()
+
         self.write(dict(code=0, msg='添加成功'))
 
     def put(self, *args, **kwargs):
@@ -186,6 +211,7 @@ class SysHandler(BaseHandler):
         development = data.get('development')
         soft_list = data.get('soft_list')
         sys_manager_list = data.get('sys_manager_list')
+        sys_url_list = data.get('sys_url_list')
         sys_id = data.get('id')
         uploadList = data.get('uploadList')
 
@@ -249,6 +275,23 @@ class SysHandler(BaseHandler):
                         sys_id=sys_id
                     )
                     session.add(new_sys_manager)
+
+            for url_obj in sys_url_list:
+                sys_url_id = url_obj.get('id', 0)
+                sys_url_na = url_obj['sys_url_na']
+                sys_url = url_obj['sys_url']
+                if sys_url_id:
+                    session.query(SysUrl).filter(SysUrl.id == sys_url_id).update({
+                        SysUrl.sys_url_na: sys_url_na,
+                        SysUrl.sys_url: sys_url,
+                    }, synchronize_session=False)
+                else:
+                    new_sys_url = SysUrl(
+                        sys_url_na=sys_url_na,
+                        sys_url=sys_url,
+                        sys_id=sys_id
+                    )
+                    session.add(new_sys_url)
 
             session.commit()
 
