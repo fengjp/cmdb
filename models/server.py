@@ -213,3 +213,11 @@ class AssetOperationalAudit(Base):
     original_data = Column('original_data', JSON)  # 原数据
     modify_data = Column('modify_data', JSON)  # 修改后的数据
     ctime = Column('ctime', DateTime(), default=datetime.now, onupdate=datetime.now)
+class AssetSql(Base):
+    __tablename__ = 'asset_sql'
+    ### 自动推送资产。错误日志信息
+    id = Column('id', Integer, primary_key=True, autoincrement=True)  # ID自增长
+    name = Column('name', String(255))
+    sqlstr = Column('sqlstr', Text())
+    remarks = Column('remarks', Text())
+    create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间
