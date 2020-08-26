@@ -220,4 +220,5 @@ class AssetSql(Base):
     name = Column('name', String(255))
     sqlstr = Column('sqlstr', Text())
     remarks = Column('remarks', Text())
+    username = Column('username', String(30))
     create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间

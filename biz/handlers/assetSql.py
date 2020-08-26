@@ -40,6 +40,7 @@ class SqlListHandler(BaseHandler):
         name = data.get('name', None)  # 个案名称
         sqlstr = data.get('sqlstr', None)  # 优先级
         remarks = data.get('remarks', False)  # 执行人
+        username = data.get('username', False)  # 执行人
         create_time = data.get('create_time', False)
         # ins_log.read_log('info', "800000000000000000000000000000000000")
         with DBContext('w', None, True) as session:
@@ -47,6 +48,7 @@ class SqlListHandler(BaseHandler):
                 name=name,
                 sqlstr=sqlstr,
                 remarks=remarks,
+                username=username,
                 create_time=create_time,))
             session.commit()
         self.write(dict(code=0, msg='成功', count=0, data=[]))
@@ -57,12 +59,14 @@ class SqlListHandler(BaseHandler):
         name = data.get('name', None)
         sqlstr = data.get('sqlstr', None)
         remarks = data.get('remarks', False)
+        username= data.get('username', False)
         create_time = data.get('create_time', False)
         with DBContext('w', None, True) as session:
             session.query(AssetSql).filter(AssetSql.id == id).update({
                 AssetSql.name: name,
                 AssetSql.sqlstr: sqlstr,
                 AssetSql.remarks: remarks,
+                AssetSql.username: username,
                 AssetSql.create_time: create_time,
             })
             session.commit()
@@ -72,6 +76,7 @@ class SqlListHandler(BaseHandler):
 class getSqlListHandler(BaseHandler):
     def get(self, *args, **kwargs):
         data_list = []
+        superuser_flag  = 0
         tovalue = self.get_argument('value', strip=True)  # 要查询的关键字
         topage = int(self.get_argument('page', strip=1))  # 开始页
         tolimit = int(self.get_argument('limit', strip=10))  # 要查询条数
@@ -82,6 +87,8 @@ class getSqlListHandler(BaseHandler):
             if tovalue:
                 params = eval(tovalue)
             conditions = []
+            if self.is_superuser:
+                superuser_flag = 1
             if params.get('name', ''):
                 conditions.append(AssetSql.name.like('%{}%'.format(params['name'])))
             if params.get('remarks', ''):
@@ -97,13 +104,14 @@ class getSqlListHandler(BaseHandler):
             case_dict["name"] = data_dict["name"]
             case_dict["sqlstr"] = data_dict["sqlstr"]
             case_dict["remarks"] = data_dict["remarks"]
+            case_dict["username"] = data_dict["username"]
             case_dict["create_time"] = str(data_dict["create_time"])
             data_list.append(case_dict)
 
         if len(data_list) > 0:
-            self.write(dict(code=0, msg='获取成功', count=tocount, data=data_list))
+            self.write(dict(code=0, msg='获取成功', count=tocount, data=data_list,flag=superuser_flag))
         else:
-            self.write(dict(code=-1, msg='没有相关数据', count=0, data=[]))
+            self.write(dict(code=-1, msg='没有相关数据', count=0, data=[],flag=superuser_flag))
 
 
 class getCasefileHandler(BaseHandler):
