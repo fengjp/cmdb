@@ -647,10 +647,34 @@ class getBarHandler(BaseHandler):
         else:
             self.write(dict(code=-1, msg='没有相关数据', count=0, data=[]))
 
+class getSqlIdList(BaseHandler):
+    def get(self, *args, **kwargs):
+        data_list = []
+        with DBContext('r') as session:
+            todata = session.query(AssetSql).filter().order_by(AssetSql.create_time.desc()).all()
+            tocount = session.query(AssetSql).filter().count()
+
+        for msg in todata:
+            case_dict = {}
+            data_dict = model_to_dict(msg)
+            case_dict["id"] = data_dict["id"]
+            case_dict["name"] = data_dict["name"]
+            case_dict["sqlstr"] = data_dict["sqlstr"]
+            case_dict["remarks"] = data_dict["remarks"]
+            case_dict["username"] = data_dict["username"]
+            case_dict["create_time"] = str(data_dict["create_time"])
+            data_list.append({"id":case_dict["id"],"name":case_dict["name"]})
+
+        if len(data_list) > 0:
+            self.write(dict(code=0, msg='获取成功', count=tocount, data=data_list))
+        else:
+            self.write(dict(code=-1, msg='没有相关数据', count=0, data=[]))
+
 
 assetSql_urls = [
     (r"/v1/sql/add/", SqlListHandler),
     (r"/v1/sql/list/", getSqlListHandler),
+    (r"/v1/sql/Idlist/", getSqlIdList),
     (r"/v1/sql/getfile/", getCasefileHandler),
     (r"/v1/sql/delete/", sqlDelete),
     (r"/v1/sql/getbar/", getBarHandler),
