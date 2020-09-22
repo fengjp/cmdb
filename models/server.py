@@ -213,6 +213,8 @@ class AssetOperationalAudit(Base):
     original_data = Column('original_data', JSON)  # 原数据
     modify_data = Column('modify_data', JSON)  # 修改后的数据
     ctime = Column('ctime', DateTime(), default=datetime.now, onupdate=datetime.now)
+
+
 class AssetSql(Base):
     __tablename__ = 'asset_sql'
     ### 自动推送资产。错误日志信息
@@ -221,4 +223,16 @@ class AssetSql(Base):
     sqlstr = Column('sqlstr', Text())
     remarks = Column('remarks', Text())
     username = Column('username', String(30))
+    create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间
+
+
+class Facility(Base):
+    __tablename__ = 'asset_facility'
+    ### 设备管理
+    id = Column('id', Integer, primary_key=True, autoincrement=True)  # ID自增长
+    facility_na = Column('facility_na', String(255))
+    facility_id = Column('facility_id', String(255))
+    facility_sn = Column('facility_sn', String(255))
+    facility_ip = Column('facility_ip', String(255))
+    remarks = Column('remarks', Text())
     create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间

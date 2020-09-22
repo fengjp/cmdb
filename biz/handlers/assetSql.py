@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # -*-coding:utf-8-*-
 """
-author : shenshuo
-date   : 2017年11月20日11:10:29
-role   : 用户管理API
-
 status = '0'    正常
 status = '10'   逻辑删除
 status = '20'   禁用
