@@ -234,5 +234,12 @@ class Facility(Base):
     facility_id = Column('facility_id', String(255))
     facility_sn = Column('facility_sn', String(255))
     facility_ip = Column('facility_ip', String(255))
+    facility_brand = Column('facility_brand', String(255))
+    facility_type = Column('facility_type', String(255))
+    facility_version = Column('facility_version', String(255))
+    warranty_date = Column('warranty_date', String(255))
+    buy_date = Column('buy_date', DateTime())
+    past_date = Column('past_date', DateTime())
+    installation_date = Column('installation_date', DateTime())
     remarks = Column('remarks', Text())
     create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间
