@@ -220,6 +220,10 @@ class AssetSql(Base):
     ### 自动推送资产。错误日志信息
     id = Column('id', Integer, primary_key=True, autoincrement=True)  # ID自增长
     name = Column('name', String(255))
+    header = Column('header', String(2500))
+    dbname_id = Column('dbname_id', String(30))
+    dbname = Column('dbname', String(300))
+    totype = Column('totype', String(30))
     sqlstr = Column('sqlstr', Text())
     remarks = Column('remarks', Text())
     username = Column('username', String(30))

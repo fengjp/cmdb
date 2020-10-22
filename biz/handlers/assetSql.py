@@ -34,6 +34,10 @@ class SqlListHandler(BaseHandler):
     def post(self, *args, **kwargs):
         data = json.loads(self.request.body.decode("utf-8"))
         name = data.get('name', None)  # 个案名称
+        header = data.get('header', None)
+        dbname_id = data.get('dbname_id', None)
+        dbname = data.get('dbname', None)
+        totype = data.get('totype', None)
         sqlstr = data.get('sqlstr', None)  # 优先级
         remarks = data.get('remarks', False)  # 执行人
         username = data.get('username', False)  # 执行人
@@ -42,6 +46,10 @@ class SqlListHandler(BaseHandler):
         with DBContext('w', None, True) as session:
             session.add(AssetSql(
                 name=name,
+                header=header,
+                dbname_id=dbname_id,
+                dbname=dbname,
+                totype=totype,
                 sqlstr=sqlstr,
                 remarks=remarks,
                 username=username,
@@ -53,6 +61,10 @@ class SqlListHandler(BaseHandler):
         data = json.loads(self.request.body.decode("utf-8"))
         id = int(data.get('id', None))  # id号
         name = data.get('name', None)
+        header = data.get('header', None)
+        dbname_id = data.get('dbname_id', None)
+        dbname = data.get('dbname', None)
+        totype = data.get('totype', None)
         sqlstr = data.get('sqlstr', None)
         remarks = data.get('remarks', False)
         username= data.get('username', False)
@@ -60,6 +72,10 @@ class SqlListHandler(BaseHandler):
         with DBContext('w', None, True) as session:
             session.query(AssetSql).filter(AssetSql.id == id).update({
                 AssetSql.name: name,
+                AssetSql.header: header,
+                AssetSql.dbname_id: dbname_id,
+                AssetSql.dbname: dbname,
+                AssetSql.totype: totype,
                 AssetSql.sqlstr: sqlstr,
                 AssetSql.remarks: remarks,
                 AssetSql.username: username,
@@ -98,6 +114,10 @@ class getSqlListHandler(BaseHandler):
             data_dict = model_to_dict(msg)
             case_dict["id"] = data_dict["id"]
             case_dict["name"] = data_dict["name"]
+            case_dict["header"] = data_dict["header"]
+            case_dict["dbname_id"] = data_dict["dbname_id"]
+            case_dict["dbname"] = data_dict["dbname"]
+            case_dict["totype"] = data_dict["totype"]
             case_dict["sqlstr"] = data_dict["sqlstr"]
             case_dict["remarks"] = data_dict["remarks"]
             case_dict["username"] = data_dict["username"]
@@ -647,14 +667,18 @@ class getSqlIdList(BaseHandler):
     def get(self, *args, **kwargs):
         data_list = []
         with DBContext('r') as session:
-            todata = session.query(AssetSql).filter().order_by(AssetSql.create_time.desc()).all()
-            tocount = session.query(AssetSql).filter().count()
+            todata = session.query(AssetSql).filter(AssetSql.totype == "定时").order_by(AssetSql.create_time.desc()).all()
+            tocount = session.query(AssetSql).filter(AssetSql.totype == "定时").count()
 
         for msg in todata:
             case_dict = {}
             data_dict = model_to_dict(msg)
             case_dict["id"] = data_dict["id"]
             case_dict["name"] = data_dict["name"]
+            case_dict["header"] = data_dict["header"]
+            case_dict["dbname_id"] = data_dict["dbname_id"]
+            case_dict["dbname"] = data_dict["dbname"]
+            case_dict["totype"] = data_dict["totype"]
             case_dict["sqlstr"] = data_dict["sqlstr"]
             case_dict["remarks"] = data_dict["remarks"]
             case_dict["username"] = data_dict["username"]
@@ -679,6 +703,10 @@ class getSqlIdDate(BaseHandler):
             data_dict = model_to_dict(msg)
             case_dict["id"] = data_dict["id"]
             case_dict["name"] = data_dict["name"]
+            case_dict["header"] = data_dict["header"]
+            case_dict["dbname_id"] = data_dict["dbname_id"]
+            case_dict["dbname"] = data_dict["dbname"]
+            case_dict["totype"] = data_dict["totype"]
             case_dict["sqlstr"] = data_dict["sqlstr"]
             case_dict["remarks"] = data_dict["remarks"]
             case_dict["username"] = data_dict["username"]
