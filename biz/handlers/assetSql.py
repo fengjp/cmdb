@@ -15,7 +15,7 @@ from libs.base_handler import BaseHandler
 from websdk.db_context import DBContext
 # from models.admin import Users, UserRoles,model_to_dict as users_model_to_dict
 from models.server import AssetSql, model_to_dict
-#from models.problem import PlanList, model_to_dict  as   model_to_dict2
+from models.db import DB, model_to_dict    as   DB_model_to_dict
 from websdk.consts import const
 from websdk.cache_context import cache_conn
 from websdk.web_logs import ins_log
@@ -41,6 +41,9 @@ class SqlListHandler(BaseHandler):
         sqlstr = data.get('sqlstr', None)  # 优先级
         remarks = data.get('remarks', False)  # 执行人
         username = data.get('username', False)  # 执行人
+        obj = data.get('obj', False)  # 项目
+        department = data.get('department', False)  # 部门
+        storage = data.get('storage', False)  # 部门
         create_time = data.get('create_time', False)
         # ins_log.read_log('info', "800000000000000000000000000000000000")
         with DBContext('w', None, True) as session:
@@ -53,6 +56,9 @@ class SqlListHandler(BaseHandler):
                 sqlstr=sqlstr,
                 remarks=remarks,
                 username=username,
+                obj=obj,
+                department=department,
+                storage=storage,
                 create_time=create_time,))
             session.commit()
         self.write(dict(code=0, msg='成功', count=0, data=[]))
@@ -68,6 +74,9 @@ class SqlListHandler(BaseHandler):
         sqlstr = data.get('sqlstr', None)
         remarks = data.get('remarks', False)
         username= data.get('username', False)
+        obj = data.get('obj', False)
+        department = data.get('department', False)
+        storage = data.get('storage', False)
         create_time = data.get('create_time', False)
         with DBContext('w', None, True) as session:
             session.query(AssetSql).filter(AssetSql.id == id).update({
@@ -79,6 +88,9 @@ class SqlListHandler(BaseHandler):
                 AssetSql.sqlstr: sqlstr,
                 AssetSql.remarks: remarks,
                 AssetSql.username: username,
+                AssetSql.obj: obj,
+                AssetSql.department: department,
+                AssetSql.storage: storage,
                 AssetSql.create_time: create_time,
             })
             session.commit()
@@ -105,6 +117,8 @@ class getSqlListHandler(BaseHandler):
                 conditions.append(AssetSql.name.like('%{}%'.format(params['name'])))
             if params.get('remarks', ''):
                 conditions.append(AssetSql.remarks.like('%{}%'.format(params['remarks'])))
+            if params.get('totype', ''):
+                conditions.append(AssetSql.totype.like('%{}%'.format(params['totype'])))
 
             todata = session.query(AssetSql).filter(*conditions).order_by(AssetSql.create_time.desc()).offset(limit_start).limit(int(tolimit)).all()
             tocount = session.query(AssetSql).filter(*conditions).count()
@@ -121,6 +135,9 @@ class getSqlListHandler(BaseHandler):
             case_dict["sqlstr"] = data_dict["sqlstr"]
             case_dict["remarks"] = data_dict["remarks"]
             case_dict["username"] = data_dict["username"]
+            case_dict["obj"] = data_dict["obj"]
+            case_dict["department"] = data_dict["department"]
+            case_dict["storage"] = data_dict["storage"]
             case_dict["create_time"] = str(data_dict["create_time"])
             data_list.append(case_dict)
 
@@ -682,6 +699,9 @@ class getSqlIdList(BaseHandler):
             case_dict["sqlstr"] = data_dict["sqlstr"]
             case_dict["remarks"] = data_dict["remarks"]
             case_dict["username"] = data_dict["username"]
+            case_dict["obj"] = data_dict["obj"]
+            case_dict["department"] = data_dict["department"]
+            case_dict["storage"] = data_dict["storage"]
             case_dict["create_time"] = str(data_dict["create_time"])
             data_list.append({"id":case_dict["id"],"name":case_dict["name"]})
 
@@ -710,6 +730,9 @@ class getSqlIdDate(BaseHandler):
             case_dict["sqlstr"] = data_dict["sqlstr"]
             case_dict["remarks"] = data_dict["remarks"]
             case_dict["username"] = data_dict["username"]
+            case_dict["obj"] = data_dict["obj"]
+            case_dict["department"] = data_dict["department"]
+            case_dict["storage"] = data_dict["storage"]
             case_dict["create_time"] = str(data_dict["create_time"])
             data_list.append(case_dict)
 
@@ -717,6 +740,144 @@ class getSqlIdDate(BaseHandler):
             self.write(dict(code=0, msg='获取成功',  data=data_list))
         else:
             self.write(dict(code=-1, msg='没有相关数据', count=0, data=[]))
+
+class getdepartmentlist(BaseHandler):
+    def get(self, *args, **kwargs):
+        objlist = []
+        department_list = []
+        de_list = []
+        obj_list = []
+        num = 0
+        with DBContext('r') as session:
+            todata = session.query(AssetSql).filter().all()
+
+        for msg in todata:
+            case_dict = {}
+            data_dict = model_to_dict(msg)
+            # case_dict["id"] = data_dict["id"]
+            # case_dict["name"] = data_dict["name"]
+            # case_dict["header"] = data_dict["header"]
+            # case_dict["dbname_id"] = data_dict["dbname_id"]
+            # case_dict["dbname"] = data_dict["dbname"]
+            # case_dict["totype"] = data_dict["totype"]
+            # case_dict["sqlstr"] = data_dict["sqlstr"]
+            # case_dict["remarks"] = data_dict["remarks"]
+            # case_dict["username"] = data_dict["username"]
+            case_dict["obj"] = data_dict["obj"]
+            case_dict["department"] = data_dict["department"]
+            # case_dict["create_time"] = str(data_dict["create_time"])
+            if case_dict["obj"] not in obj_list:
+                obj_list.append(case_dict["obj"])
+                objlist.append({"k":num,"v":case_dict["obj"]})
+            if case_dict["department"] not in de_list:
+                de_list.append(case_dict["department"])
+                department_list.append({"k":num,"v":case_dict["department"]})
+            num  =  num + 1
+
+        if len(department_list) > 0:
+            self.write(dict(code=0, msg='获取成功',  data=department_list,objlist=objlist))
+        else:
+            self.write(dict(code=-1, msg='没有相关数据', count=0, data=[],objlist=[]))
+
+
+class getstoragelist(BaseHandler):
+    def get(self, *args, **kwargs):
+        data_list = []
+        department = self.get_argument('department', strip=True)
+        obj = self.get_argument('obj', strip=True)
+        with DBContext('r') as session:
+            conditions = []
+            conditions.append(AssetSql.department == department)
+            conditions.append(AssetSql.obj ==  obj)
+            todata = session.query(AssetSql).filter(*conditions).all()
+
+        for msg in todata:
+            case_dict = {}
+            data_dict = model_to_dict(msg)
+            case_dict["id"] = data_dict["id"]
+            case_dict["obj"] = data_dict["obj"]
+            case_dict["department"] = data_dict["department"]
+            case_dict["storage"] = data_dict["storage"]
+            data_list.append({"k":case_dict["id"],"v":case_dict["storage"]})
+
+        if len(data_list) > 0:
+            self.write(dict(code=0, msg='获取成功',  data=data_list))
+        else:
+            self.write(dict(code=-1, msg='没有相关数据', count=0, data=[]))
+
+class getimplementlist(BaseHandler):
+    def get(self, *args, **kwargs):
+        data_list = []
+        data_list2 = []
+        start = self.get_argument('start', strip=True)
+        end = self.get_argument('end', strip=True)
+        storage = self.get_argument('storage', strip=True) #存储过程id
+        with DBContext('r') as session:
+            conditions = []
+            conditions.append(AssetSql.id == int(storage))
+            todata = session.query(AssetSql).filter(*conditions).all()
+
+        for msg in todata:
+            case_dict = {}
+            data_dict = model_to_dict(msg)
+            case_dict["id"] = data_dict["id"]
+            case_dict["name"] = data_dict["name"]
+            case_dict["header"] = data_dict["header"]
+            case_dict["dbname_id"] = data_dict["dbname_id"]
+            case_dict["dbname"] = data_dict["dbname"]
+            case_dict["totype"] = data_dict["totype"]
+            case_dict["obj"] = data_dict["obj"]
+            case_dict["department"] = data_dict["department"]
+            case_dict["storage"] = data_dict["storage"]
+            case_dict["create_time"] = str(data_dict["create_time"])
+            data_list.append(case_dict)
+
+        if len(data_list) > 0:
+
+            with DBContext('r') as session:
+                conditions = []
+                conditions.append(DB.id == int(data_list[0]["dbname_id"]))
+                DB_data = session.query(DB).filter(*conditions).all()
+
+            for msg in DB_data:
+                case_dict = {}
+                data_dict = DB_model_to_dict(msg)
+                case_dict["id"] = data_dict["id"]
+                case_dict["db_instance"] = data_dict["db_instance"] #库名
+                case_dict["db_host"] = data_dict["db_host"]
+                case_dict["db_port"] = data_dict["db_port"]
+                case_dict["db_user"] = data_dict["db_user"]
+                case_dict["db_pwd"] = data_dict["db_pwd"]
+                case_dict["db_type"] = data_dict["db_type"]  #oracle/mysql
+
+                data_list2.append(case_dict)
+            # ins_log.read_log('info', "800000000000000000000000000000000000")
+            # ins_log.read_log('info', data_list2)
+            # ins_log.read_log('info', "800000000000000000000000000000000000")
+            #连接oracle
+            #执行存储过程
+            #返回数据
+            title_list = data_list[0]["header"].split('|')
+            columns_list = []
+            num = 0
+            key_list = []
+            for  h in title_list:
+                tempstr = 'number'+str(num)
+                columns_list.append({ "title": h, "key": tempstr, "editable": "true" })
+                key_list.append(tempstr)
+                num +=1
+
+            data_list3 =[{"number0":1,"number1":5,"number2":8,"number3":10}]
+            ins_log.read_log('info', "800000000000000000000000000000000000")
+            ins_log.read_log('info', title_list)
+            ins_log.read_log('info', columns_list)
+            ins_log.read_log('info', key_list)
+            ins_log.read_log('info', "800000000000000000000000000000000000")
+            self.write(dict(code=0, msg='获取成功',  data=data_list3,columnslist = columns_list,titlelist=title_list,keylist= key_list))
+        else:
+            self.write(dict(code=-1, msg='没有相关存储过程数据',data=[],columns_list=[],titlelist=[],keylist=[]))
+
+
 
 
 assetSql_urls = [
@@ -727,6 +888,9 @@ assetSql_urls = [
     (r"/v1/sql/getfile/", getCasefileHandler),
     (r"/v1/sql/delete/", sqlDelete),
     (r"/v1/sql/getbar/", getBarHandler),
+    (r"/v1/sql/departmentlist/", getdepartmentlist),
+    (r"/v1/sql/storagelist/", getstoragelist),
+    (r"/v1/sql/implement/", getimplementlist),
 ]
 
 if __name__ == "__main__":

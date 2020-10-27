@@ -217,7 +217,6 @@ class AssetOperationalAudit(Base):
 
 class AssetSql(Base):
     __tablename__ = 'asset_sql'
-    ### 自动推送资产。错误日志信息
     id = Column('id', Integer, primary_key=True, autoincrement=True)  # ID自增长
     name = Column('name', String(255))
     header = Column('header', String(2500))
@@ -227,6 +226,9 @@ class AssetSql(Base):
     sqlstr = Column('sqlstr', Text())
     remarks = Column('remarks', Text())
     username = Column('username', String(30))
+    obj = Column('obj', String(300))
+    department = Column('department', String(300))
+    storage = Column('storage', String(100))
     create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间
 
 
