@@ -42,7 +42,7 @@ class SqlListHandler(BaseHandler):
         remarks = data.get('remarks', False)  # 执行人
         username = data.get('username', False)  # 执行人
         obj = data.get('obj', False)  # 项目
-        department = data.get('department', False)  # 部门
+        department = str(data.get('department', False))[1:-1] # 部门
         storage = data.get('storage', False)  # 部门
         create_time = data.get('create_time', False)
         # ins_log.read_log('info', "800000000000000000000000000000000000")
@@ -75,7 +75,7 @@ class SqlListHandler(BaseHandler):
         remarks = data.get('remarks', False)
         username= data.get('username', False)
         obj = data.get('obj', False)
-        department = data.get('department', False)
+        department = str(data.get('department', False))[1:-1]
         storage = data.get('storage', False)
         create_time = data.get('create_time', False)
         with DBContext('w', None, True) as session:
@@ -787,7 +787,9 @@ class getstoragelist(BaseHandler):
         obj = self.get_argument('obj', strip=True)
         with DBContext('r') as session:
             conditions = []
-            conditions.append(AssetSql.department == department)
+            # conditions.append(AssetSql.department == department)
+            department = "'" + department +  "'"
+            conditions.append(AssetSql.department.like('%{}%'.format(department)))
             conditions.append(AssetSql.obj ==  obj)
             todata = session.query(AssetSql).filter(*conditions).all()
 
@@ -796,9 +798,10 @@ class getstoragelist(BaseHandler):
             data_dict = model_to_dict(msg)
             case_dict["id"] = data_dict["id"]
             case_dict["obj"] = data_dict["obj"]
+            case_dict["name"] = data_dict["name"]
             case_dict["department"] = data_dict["department"]
             case_dict["storage"] = data_dict["storage"]
-            data_list.append({"k":case_dict["id"],"v":case_dict["storage"]})
+            data_list.append({"k":case_dict["id"],"v":case_dict["name"],"n":case_dict["storage"]})
 
         if len(data_list) > 0:
             self.write(dict(code=0, msg='获取成功',  data=data_list))
@@ -809,9 +812,9 @@ class getimplementlist(BaseHandler):
     def get(self, *args, **kwargs):
         data_list = []
         data_list2 = []
-        start = self.get_argument('start', strip=True)
-        end = self.get_argument('end', strip=True)
+        date = self.get_argument('date', strip=True)
         storage = self.get_argument('storage', strip=True) #存储过程id
+        flag = self.get_argument('flag', strip=True)  # 1执行sql，2执行存储过程
         with DBContext('r') as session:
             conditions = []
             conditions.append(AssetSql.id == int(storage))
@@ -825,6 +828,7 @@ class getimplementlist(BaseHandler):
             case_dict["header"] = data_dict["header"]
             case_dict["dbname_id"] = data_dict["dbname_id"]
             case_dict["dbname"] = data_dict["dbname"]
+            case_dict["sqlstr"] = data_dict["sqlstr"]
             case_dict["totype"] = data_dict["totype"]
             case_dict["obj"] = data_dict["obj"]
             case_dict["department"] = data_dict["department"]
@@ -872,6 +876,7 @@ class getimplementlist(BaseHandler):
             ins_log.read_log('info', title_list)
             ins_log.read_log('info', columns_list)
             ins_log.read_log('info', key_list)
+            ins_log.read_log('info', flag)
             ins_log.read_log('info', "800000000000000000000000000000000000")
             self.write(dict(code=0, msg='获取成功',  data=data_list3,columnslist = columns_list,titlelist=title_list,keylist= key_list))
         else:
