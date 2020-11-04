@@ -44,6 +44,9 @@ class SqlListHandler(BaseHandler):
         obj = data.get('obj', False)  # 项目
         department = str(data.get('department', False))[1:-1] # 部门
         storage = data.get('storage', False)  # 部门
+        state = data.get('state', False)
+        mode = data.get('mode', False)
+        flag = data.get('flag', False)
         create_time = data.get('create_time', False)
         # ins_log.read_log('info', "800000000000000000000000000000000000")
         with DBContext('w', None, True) as session:
@@ -59,6 +62,9 @@ class SqlListHandler(BaseHandler):
                 obj=obj,
                 department=department,
                 storage=storage,
+                mode=mode,
+                state=state,
+                flag=flag,
                 create_time=create_time,))
             session.commit()
         self.write(dict(code=0, msg='成功', count=0, data=[]))
@@ -77,6 +83,9 @@ class SqlListHandler(BaseHandler):
         obj = data.get('obj', False)
         department = str(data.get('department', False))[1:-1]
         storage = data.get('storage', False)
+        state = data.get('state', False)
+        mode = data.get('mode', False)
+        flag = data.get('flag', False)
         create_time = data.get('create_time', False)
         with DBContext('w', None, True) as session:
             session.query(AssetSql).filter(AssetSql.id == id).update({
@@ -91,6 +100,9 @@ class SqlListHandler(BaseHandler):
                 AssetSql.obj: obj,
                 AssetSql.department: department,
                 AssetSql.storage: storage,
+                AssetSql.state: state,
+                AssetSql.mode: mode,
+                AssetSql.flag: flag,
                 AssetSql.create_time: create_time,
             })
             session.commit()
@@ -138,6 +150,9 @@ class getSqlListHandler(BaseHandler):
             case_dict["obj"] = data_dict["obj"]
             case_dict["department"] = data_dict["department"]
             case_dict["storage"] = data_dict["storage"]
+            case_dict["mode"] = data_dict["mode"]
+            case_dict["state"] = data_dict["state"]
+            case_dict["flag"] = data_dict["flag"]
             case_dict["create_time"] = str(data_dict["create_time"])
             data_list.append(case_dict)
 
@@ -733,6 +748,8 @@ class getSqlIdDate(BaseHandler):
             case_dict["obj"] = data_dict["obj"]
             case_dict["department"] = data_dict["department"]
             case_dict["storage"] = data_dict["storage"]
+            case_dict["mode"] = data_dict["mode"]
+            case_dict["state"] = data_dict["state"]
             case_dict["create_time"] = str(data_dict["create_time"])
             data_list.append(case_dict)
 
@@ -880,8 +897,47 @@ class getimplementlist(BaseHandler):
             ins_log.read_log('info', "800000000000000000000000000000000000")
             self.write(dict(code=0, msg='获取成功',  data=data_list3,columnslist = columns_list,titlelist=title_list,keylist= key_list))
         else:
-            self.write(dict(code=-1, msg='没有相关存储过程数据',data=[],columns_list=[],titlelist=[],keylist=[]))
+            self.write(dict(code=-1, msg='没有相关存储过程数据',data=[],columns_listb=[],titlelist=[],keylist=[]))
 
+
+class getobjlist(BaseHandler):
+    def get(self, *args, **kwargs):
+        data_list = []
+        data_list2 = []
+        temp_list = []
+        temp_list2 = []
+        department = self.get_argument('department', strip=True)
+        with DBContext('r') as session:
+            conditions = []
+            department = "'" + department +  "'"
+            conditions.append(AssetSql.department.like('%{}%'.format(department)))
+            todata = session.query(AssetSql).filter(*conditions).all()
+
+        for msg in todata:
+            case_dict = {}
+            data_dict = model_to_dict(msg)
+            case_dict["id"] = data_dict["id"]
+            case_dict["obj"] = data_dict["obj"]
+            case_dict["name"] = data_dict["name"]
+            case_dict["department"] = data_dict["department"]
+            case_dict["storage"] = data_dict["storage"]
+            case_dict["flag"] = data_dict["flag"]
+            if  case_dict["obj"] not  in  temp_list:
+                temp_list.append(case_dict["obj"])
+                data_list.append({"v":case_dict["obj"],"t":case_dict["flag"]})
+            data_list2.append(case_dict)
+
+        for  i in temp_list:
+            temp_list2.append({"name":i,"date":[]})
+        for  j in    temp_list2:
+             for   d in  data_list2:
+                if    str(j["name"])   == str(d["obj"]):
+                    j["date"].append({"k":d["id"],"v":d["name"],"t":d["flag"],"s":d["storage"]})
+
+        if len(data_list) > 0:
+            self.write(dict(code=0, msg='获取成功',  data=data_list,storagelist=temp_list2))
+        else:
+            self.write(dict(code=-1, msg='没有相关数据', count=0, data=[]))
 
 
 
@@ -895,6 +951,7 @@ assetSql_urls = [
     (r"/v1/sql/getbar/", getBarHandler),
     (r"/v1/sql/departmentlist/", getdepartmentlist),
     (r"/v1/sql/storagelist/", getstoragelist),
+    (r"/v1/sql/objlist/", getobjlist),
     (r"/v1/sql/implement/", getimplementlist),
 ]
 

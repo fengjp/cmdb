@@ -229,6 +229,9 @@ class AssetSql(Base):
     obj = Column('obj', String(300))
     department = Column('department', String(300))
     storage = Column('storage', String(100))
+    state = Column('state', String(100))
+    mode = Column('mode', String(100))
+    flag = Column('flag', String(10))
     create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间
 
 
