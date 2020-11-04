@@ -699,8 +699,12 @@ class getSqlIdList(BaseHandler):
     def get(self, *args, **kwargs):
         data_list = []
         with DBContext('r') as session:
-            todata = session.query(AssetSql).filter(AssetSql.totype == "定时").order_by(AssetSql.create_time.desc()).all()
-            tocount = session.query(AssetSql).filter(AssetSql.totype == "定时").count()
+            conditions = []
+            conditions.append(AssetSql.totype == "sql")
+            conditions.append(AssetSql.mode == "定时")
+            conditions.append(AssetSql.state == "运行")
+            todata = session.query(AssetSql).filter(*conditions).order_by(AssetSql.create_time.desc()).all()
+            tocount = session.query(AssetSql).filter(*conditions).count()
 
         for msg in todata:
             case_dict = {}
