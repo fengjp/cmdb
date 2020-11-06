@@ -232,6 +232,7 @@ class AssetSql(Base):
     state = Column('state', String(100))
     mode = Column('mode', String(100))
     flag = Column('flag', String(10))
+    authorized  = Column('authorized', String(2500))
     create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间
 
 
