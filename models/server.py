@@ -249,3 +249,19 @@ class Facility(Base):
     installation_date = Column('installation_date', DateTime())
     remarks = Column('remarks', Text())
     create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间
+
+
+class ServerPerformance(Base):
+    __tablename__ = 'asset_server_performance'
+
+    ### 系统性能记录
+    id = Column(Integer, primary_key=True, autoincrement=True)  # ID自增长
+    ip = Column('ip', String(50), default='', comment="ip")
+    cpu_sy = Column('cpu_sy', String(50), default='', comment="内核空间占用CPU的百分比")
+    mem_total = Column('mem_total', Integer, default=0, comment="物理内存总量")
+    mem_free = Column('mem_free', Integer, default=0, comment="使用中的内存总量")
+    mem_used = Column('mem_used', Integer, default=0, comment="使用中的内存总量")
+    mem_buff_cache = Column('mem_buff_cache', Integer, default=0, comment="缓存的内存量")
+    tcp_established = Column('tcp_established', Integer, default=0, comment="tcp established")
+    tcp_time_wait = Column('tcp_time_wait', Integer, default=0, comment="tcp time_wait")
+    iowait = Column('iowait', String(50), default='', comment="表示CPU用于等待io请求的完成时间")
