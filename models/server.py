@@ -271,3 +271,4 @@ class ServerPerformance(Base):
     tcp_established = Column('tcp_established', Integer, default=0, comment="tcp established")
     tcp_time_wait = Column('tcp_time_wait', Integer, default=0, comment="tcp time_wait")
     iowait = Column('iowait', String(50), default='', comment="表示CPU用于等待io请求的完成时间")
+    create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间
