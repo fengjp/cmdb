@@ -17,7 +17,9 @@ from biz.handlers.asset_operational_audit_handler import asset_audit_urls
 from biz.handlers.asset_soft_handler import soft_urls
 from biz.handlers.asset_sys_handler import sys_urls
 from biz.handlers.assetSql import assetSql_urls
+from biz.handlers.storage_handler import storage_urls
 from biz.handlers.facility_handler import facility_urls
+from biz.handlers.record_handler import record_urls
 
 
 class Application(myApplication):
@@ -37,6 +39,8 @@ class Application(myApplication):
         urls.extend(sys_urls)
         urls.extend(assetSql_urls)
         urls.extend(facility_urls)
+        urls.extend(storage_urls)
+        urls.extend(record_urls)
         super(Application, self).__init__(urls, **settings)
 
 

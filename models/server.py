@@ -229,6 +229,9 @@ class AssetSql(Base):
     obj = Column('obj', String(300))
     department = Column('department', String(300))
     storage = Column('storage', String(100))
+    storage2 = Column('storage2', String(100))
+    dictvalue  = Column('dictvalue', String(2000))
+    dictvalue2 = Column('dictvalue2', String(2000))
     state = Column('state', String(100))
     mode = Column('mode', String(100))
     flag = Column('flag', String(10))
@@ -254,4 +257,34 @@ class Facility(Base):
     past_date = Column('past_date', DateTime())
     installation_date = Column('installation_date', DateTime())
     remarks = Column('remarks', Text())
+    create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间
+
+
+class Storage(Base):
+    __tablename__ = 'asset_storage'
+    ### 存储过程列表
+    id = Column('id', Integer, primary_key=True, autoincrement=True)  # ID自增长
+    name = Column('name', String(500))#存储过程名
+    mode = Column('mode', String(20)) #执行方式
+    dictvalue = Column('dictvalue', String(5000)) #参数
+    authorized = Column('authorized', String(5000)) #授权用户列表
+    consume = Column('consume', String(50))  # 时长
+    remarks = Column('remarks', Text())  #详细描述
+    username = Column('username', String(200)) #创建人
+    create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间
+
+
+
+
+
+class Record(Base):
+    __tablename__ = 'asset_record'
+    ### 模板列表
+    id = Column('id', Integer, primary_key=True, autoincrement=True)  # ID自增长
+    recordname = Column('recordname', String(500))  # 模板名称
+    recordlist= Column('recordlist', String(2000)) #模板记录
+    zhname= Column('zhname', String(2000)) #中文
+    username = Column('username', String(50))  # 用户名
+    tablename = Column('tablename', String(200))  # 数据表名
+    number = Column('number', Integer) #模板使用次数
     create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间
