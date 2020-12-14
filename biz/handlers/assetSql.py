@@ -26,7 +26,6 @@ import tornado.web
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from docx import shared
 import os
 
 
