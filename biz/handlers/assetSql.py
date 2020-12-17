@@ -35,6 +35,7 @@ import tornado.web
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+<<<<<<< HEAD
 from docx import shared
 from libs.mysql_conn import MysqlBase
 from libs.aes_coder import encrypt, decrypt
@@ -42,6 +43,9 @@ import  cx_Oracle
 import  time
 import copy
 import traceback
+=======
+import os
+>>>>>>> 626e13e3e4f5b16f0adb71ddaa9c0671e04250b9
 
 def getfieldlist(dbname_id,fieldname):
         data_list = []
