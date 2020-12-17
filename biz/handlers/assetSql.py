@@ -15,94 +15,77 @@ app_path = _op(project_path)
 sys.path.insert(0, project_path)
 
 import json
-import shortuuid
-import base64
-from websdk.jwt_token import gen_md5
-from websdk.tools import check_password
 from libs.base_handler import BaseHandler
 from websdk.db_context import DBContext
-# from models.admin import Users, UserRoles,model_to_dict as users_model_to_dict
 from models.server import AssetSql, model_to_dict
-from models.server import Storage 
+from models.server import Storage
 from models.db import DB, model_to_dict    as   DB_model_to_dict
-from websdk.consts import const
-from websdk.cache_context import cache_conn
 from websdk.web_logs import ins_log
-from sqlalchemy import or_, and_
-from sqlalchemy import func
-import tornado.ioloop
-import tornado.web
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-<<<<<<< HEAD
-from docx import shared
 from libs.mysql_conn import MysqlBase
 from libs.aes_coder import encrypt, decrypt
-import  cx_Oracle
-import  time
+import cx_Oracle
+import time
 import copy
 import traceback
-=======
-import os
->>>>>>> 626e13e3e4f5b16f0adb71ddaa9c0671e04250b9
 
-def getfieldlist(dbname_id,fieldname):
-        data_list = []
-        data_list3 = []
-        with DBContext('r') as session:
-             conditions = []
-             conditions.append(DB.id == int(dbname_id))
-             DB_data = session.query(DB).filter(*conditions).all()
 
-        for msg in DB_data:
-                case_dict = {}
-                data_dict = DB_model_to_dict(msg)
-                case_dict["id"] = data_dict["id"]
-                case_dict["db_instance"] = data_dict["db_instance"] #库名
-                case_dict["db_host"] = data_dict["db_host"]
-                case_dict["db_port"] = data_dict["db_port"]
-                case_dict["db_user"] = data_dict["db_user"]
-                case_dict["db_pwd"] = data_dict["db_pwd"]
-                case_dict["db_type"] = data_dict["db_type"]  #oracle/mysql
+def getfieldlist(dbname_id, fieldname):
+    data_list = []
+    data_list3 = []
+    with DBContext('r') as session:
+        conditions = []
+        conditions.append(DB.id == int(dbname_id))
+        DB_data = session.query(DB).filter(*conditions).all()
 
-                data_list.append(case_dict)
-        #sql_temp_str = "select  *  from  all_col_comments  where  table_name =upper('xxx')" 
-        #column_name字段名  comments字段中文备注
-        sql_temp_str = "select  column_name, comments  from  all_col_comments   where  table_name =upper('xxx') and owner=upper('nnn')"
-        sql_temp_str = sql_temp_str.replace("xxx",fieldname)
-        sql_temp_str = sql_temp_str.replace("nnn",data_list[0]["db_user"])
-        ins_log.read_log('info',sql_temp_str)
-        CUSTOM_DB_INFO = dict(
-               host=data_list[0]["db_host"],
-               port=data_list[0]["db_port"],
-               user=data_list[0]["db_user"],
-               passwd=decrypt(data_list[0]["db_pwd"]),
-               db=data_list[0]["db_instance"] # 库名
-               )
-        try:
-                   if data_list[0]["db_type"]  == "mysql":
-                       mysql_conn = MysqlBase(**CUSTOM_DB_INFO)
-                       db_data = mysql_conn.query(sql_temp_str)  #测试用不了
-                   if data_list[0]["db_type"]   == "oracle":
-                       temp_str = data_list[0]["db_host"] + '/' + data_list[0]["db_instance"] 
-                       oracle_conn = cx_Oracle.connect(data_list[0]["db_user"],decrypt(data_list[0]["db_pwd"]),temp_str)
-                       cur = oracle_conn.cursor()
-                       data_temp = cur.execute(sql_temp_str)
-                       for  i in  data_temp:
-                           temp_dict = {}
-                           temp_dict["name"] = str(i[0]) 
-                           if str(i[1]) == "None":
-                                temp_dict["zh_name"] = str(i[0])
-                           else:
-                                temp_dict["zh_name"] = str(i[1]) 
-                           data_list3.append(temp_dict)
-                       cur.close()
-                       oracle_conn.close()
-        except:
-                       traceback.print_exc()
-        
-        return  data_list3
+    for msg in DB_data:
+        case_dict = {}
+        data_dict = DB_model_to_dict(msg)
+        case_dict["id"] = data_dict["id"]
+        case_dict["db_instance"] = data_dict["db_instance"]  # 库名
+        case_dict["db_host"] = data_dict["db_host"]
+        case_dict["db_port"] = data_dict["db_port"]
+        case_dict["db_user"] = data_dict["db_user"]
+        case_dict["db_pwd"] = data_dict["db_pwd"]
+        case_dict["db_type"] = data_dict["db_type"]  # oracle/mysql
+
+        data_list.append(case_dict)
+    # sql_temp_str = "select  *  from  all_col_comments  where  table_name =upper('xxx')"
+    # column_name字段名  comments字段中文备注
+    sql_temp_str = "select  column_name, comments  from  all_col_comments   where  table_name =upper('xxx') and owner=upper('nnn')"
+    sql_temp_str = sql_temp_str.replace("xxx", fieldname)
+    sql_temp_str = sql_temp_str.replace("nnn", data_list[0]["db_user"])
+    ins_log.read_log('info', sql_temp_str)
+    CUSTOM_DB_INFO = dict(
+        host=data_list[0]["db_host"],
+        port=data_list[0]["db_port"],
+        user=data_list[0]["db_user"],
+        passwd=decrypt(data_list[0]["db_pwd"]),
+        db=data_list[0]["db_instance"]  # 库名
+    )
+    try:
+        if data_list[0]["db_type"] == "mysql":
+            mysql_conn = MysqlBase(**CUSTOM_DB_INFO)
+            db_data = mysql_conn.query(sql_temp_str)  # 测试用不了
+        if data_list[0]["db_type"] == "oracle":
+            temp_str = data_list[0]["db_host"] + '/' + data_list[0]["db_instance"]
+            oracle_conn = cx_Oracle.connect(data_list[0]["db_user"], decrypt(data_list[0]["db_pwd"]), temp_str)
+            cur = oracle_conn.cursor()
+            data_temp = cur.execute(sql_temp_str)
+            for i in data_temp:
+                temp_dict = {}
+                temp_dict["name"] = str(i[0])
+                if str(i[1]) == "None":
+                    temp_dict["zh_name"] = str(i[0])
+                else:
+                    temp_dict["zh_name"] = str(i[1])
+                data_list3.append(temp_dict)
+            cur.close()
+            oracle_conn.close()
+    except:
+        traceback.print_exc()
+
+    return data_list3
+
 
 class SqlListHandler(BaseHandler):
     def post(self, *args, **kwargs):
@@ -116,21 +99,21 @@ class SqlListHandler(BaseHandler):
         remarks = data.get('remarks', False)  # 执行人
         username = data.get('username', False)  # 执行人
         obj = data.get('obj', False)  # 项目
-        department = str(data.get('department', False))[1:-1] # 部门
+        department = str(data.get('department', False))[1:-1]  # 部门
         storage = data.get('storage', False)  # 部门
         storage2 = data.get('storage2', False)  # 部门
         state = data.get('state', False)
         mode = data.get('mode', False)
         flag = data.get('flag', False)
-        authorized =  str(data.get('authorized', '[]'))
-        fieldname =  str(data.get('fieldname', False)).strip() #表名
-        fieldlist = "" 
+        authorized = str(data.get('authorized', '[]'))
+        fieldname = str(data.get('fieldname', False)).strip()  # 表名
+        fieldlist = ""
         dictvalue = str(data.get('dictvalue', False))
         dictvalue2 = str(data.get('dictvalue2', False))
         if authorized == "None":
             authorized = "[]"
         create_time = data.get('create_time', False)
-        #获取数据表字段名和对应的中文名称（測試版）
+        # 获取数据表字段名和对应的中文名称（測試版）
         # if str(totype) == "存储过程":
         #    fieldlist = str(getfieldlist(dbname_id,fieldname))
         fieldlist = str([{"name": "bianhao", "zh_name": "地區编号"}, {"name": "number", "zh_name": "车牌号"},
@@ -158,8 +141,8 @@ class SqlListHandler(BaseHandler):
                 dictvalue2=dictvalue2,
                 fieldname=fieldname,
                 fieldlist=str(fieldlist),
-                authorized = authorized,
-                create_time=create_time,))
+                authorized=authorized,
+                create_time=create_time, ))
             session.commit()
         self.write(dict(code=0, msg='成功', count=0, data=[]))
 
@@ -173,7 +156,7 @@ class SqlListHandler(BaseHandler):
         totype = data.get('totype', None)
         sqlstr = data.get('sqlstr', None)
         remarks = data.get('remarks', False)
-        username= data.get('username', False)
+        username = data.get('username', False)
         obj = data.get('obj', False)
         department = str(data.get('department', False))[1:-1]
         storage = data.get('storage', False)
@@ -181,15 +164,15 @@ class SqlListHandler(BaseHandler):
         state = data.get('state', '')
         mode = data.get('mode', False)
         flag = data.get('flag', False)
-        authorized =  str(data.get('authorized', '[]'))
-        fieldname =  str(data.get('fieldname', False)).strip()
-        fieldlist =  "" 
+        authorized = str(data.get('authorized', '[]'))
+        fieldname = str(data.get('fieldname', False)).strip()
+        fieldlist = ""
         dictvalue = str(data.get('dictvalue', False))
         dictvalue2 = str(data.get('dictvalue2', False))
         if authorized == "None":
             authorized = "[]"
         create_time = data.get('create_time', False)
-        #获取数据表字段名和对应的中文名称
+        # 获取数据表字段名和对应的中文名称
         # if str(totype) == "存储过程":
         #    fieldlist = str(getfieldlist(dbname_id,fieldname))
         fieldlist = str([{"name": "bianhao", "zh_name": "地區编号"}, {"name": "number", "zh_name": "车牌号"},
@@ -227,7 +210,7 @@ class SqlListHandler(BaseHandler):
 class getSqlListHandler(BaseHandler):
     def get(self, *args, **kwargs):
         data_list = []
-        superuser_flag  = 0
+        superuser_flag = 0
         tovalue = self.get_argument('value', strip=True)  # 要查询的关键字
         topage = int(self.get_argument('page', strip=1))  # 开始页
         tolimit = int(self.get_argument('limit', strip=10))  # 要查询条数
@@ -247,7 +230,8 @@ class getSqlListHandler(BaseHandler):
             if params.get('totype', ''):
                 conditions.append(AssetSql.totype.like('%{}%'.format(params['totype'])))
 
-            todata = session.query(AssetSql).filter(*conditions).order_by(AssetSql.create_time.desc()).offset(limit_start).limit(int(tolimit)).all()
+            todata = session.query(AssetSql).filter(*conditions).order_by(AssetSql.create_time.desc()).offset(
+                limit_start).limit(int(tolimit)).all()
             tocount = session.query(AssetSql).filter(*conditions).count()
 
         for msg in todata:
@@ -277,11 +261,9 @@ class getSqlListHandler(BaseHandler):
             data_list.append(case_dict)
 
         if len(data_list) > 0:
-            self.write(dict(code=0, msg='获取成功', count=tocount, data=data_list,flag=superuser_flag))
+            self.write(dict(code=0, msg='获取成功', count=tocount, data=data_list, flag=superuser_flag))
         else:
-            self.write(dict(code=-1, msg='没有相关数据', count=0, data=[],flag=superuser_flag))
-
-
+            self.write(dict(code=-1, msg='没有相关数据', count=0, data=[], flag=superuser_flag))
 
 
 def getlist(date_list, lime):
@@ -311,13 +293,12 @@ class sqlDelete(BaseHandler):
         return self.write(dict(code=0, msg='删除成功'))
 
 
-
 class getSqlIdList(BaseHandler):
     def get(self, *args, **kwargs):
         data_list = []
         with DBContext('r') as session:
             conditions = []
-            #conditions.append(AssetSql.totype == "sql")
+            # conditions.append(AssetSql.totype == "sql")
             conditions.append(AssetSql.mode == "定时")
             conditions.append(AssetSql.state == "运行")
             todata = session.query(AssetSql).filter(*conditions).order_by(AssetSql.create_time.desc()).all()
@@ -342,12 +323,13 @@ class getSqlIdList(BaseHandler):
             case_dict["dictvalue"] = data_dict["dictvalue"]
             case_dict["dictvalue2"] = data_dict["dictvalue2"]
             case_dict["create_time"] = str(data_dict["create_time"])
-            data_list.append({"id":case_dict["id"],"name":case_dict["name"]})
+            data_list.append({"id": case_dict["id"], "name": case_dict["name"]})
 
         if len(data_list) > 0:
             self.write(dict(code=0, msg='获取成功', count=tocount, data=data_list))
         else:
             self.write(dict(code=-1, msg='没有相关数据', count=0, data=[]))
+
 
 class getSqlIdDate(BaseHandler):
     def get(self, *args, **kwargs):
@@ -382,9 +364,10 @@ class getSqlIdDate(BaseHandler):
             data_list.append(case_dict)
 
         if len(data_list) > 0:
-            self.write(dict(code=0, msg='获取成功',  data=data_list))
+            self.write(dict(code=0, msg='获取成功', data=data_list))
         else:
             self.write(dict(code=-1, msg='没有相关数据', count=0, data=[]))
+
 
 class getdepartmentlist(BaseHandler):
     def get(self, *args, **kwargs):
@@ -413,16 +396,16 @@ class getdepartmentlist(BaseHandler):
             # case_dict["create_time"] = str(data_dict["create_time"])
             if case_dict["obj"] not in obj_list:
                 obj_list.append(case_dict["obj"])
-                objlist.append({"k":num,"v":case_dict["obj"]})
+                objlist.append({"k": num, "v": case_dict["obj"]})
             if case_dict["department"] not in de_list:
                 de_list.append(case_dict["department"])
-                department_list.append({"k":num,"v":case_dict["department"]})
-            num  =  num + 1
+                department_list.append({"k": num, "v": case_dict["department"]})
+            num = num + 1
 
         if len(department_list) > 0:
-            self.write(dict(code=0, msg='获取成功',  data=department_list,objlist=objlist))
+            self.write(dict(code=0, msg='获取成功', data=department_list, objlist=objlist))
         else:
-            self.write(dict(code=-1, msg='没有相关数据', count=0, data=[],objlist=[]))
+            self.write(dict(code=-1, msg='没有相关数据', count=0, data=[], objlist=[]))
 
 
 class getstoragelist(BaseHandler):
@@ -433,9 +416,9 @@ class getstoragelist(BaseHandler):
         with DBContext('r') as session:
             conditions = []
             # conditions.append(AssetSql.department == department)
-            department = "'" + department +  "'"
+            department = "'" + department + "'"
             conditions.append(AssetSql.department.like('%{}%'.format(department)))
-            conditions.append(AssetSql.obj ==  obj)
+            conditions.append(AssetSql.obj == obj)
             todata = session.query(AssetSql).filter(*conditions).all()
 
         for msg in todata:
@@ -446,21 +429,22 @@ class getstoragelist(BaseHandler):
             case_dict["name"] = data_dict["name"]
             case_dict["department"] = data_dict["department"]
             case_dict["storage"] = data_dict["storage"]
-            data_list.append({"k":case_dict["id"],"v":case_dict["name"],"n":case_dict["storage"]})
+            data_list.append({"k": case_dict["id"], "v": case_dict["name"], "n": case_dict["storage"]})
 
         if len(data_list) > 0:
-            self.write(dict(code=0, msg='获取成功',  data=data_list))
+            self.write(dict(code=0, msg='获取成功', data=data_list))
         else:
             self.write(dict(code=-1, msg='没有相关数据', count=0, data=[]))
+
 
 class getimplementlist(BaseHandler):
     def get(self, *args, **kwargs):
         data_list = []
         data_list2 = []
-        parameter = eval(self.get_argument('parameter', strip=True)) #参数列表
-        storage = self.get_argument('storage', strip=True) #存储过程id
+        parameter = eval(self.get_argument('parameter', strip=True))  # 参数列表
+        storage = self.get_argument('storage', strip=True)  # 存储过程id
         flag = self.get_argument('flag', strip=True)  # 1执行sql，2执行存储过程
-        targetKeys  = self.get_argument('targetKeys', strip=True)  #需要查询的字段列表		
+        targetKeys = self.get_argument('targetKeys', strip=True)  # 需要查询的字段列表
         with DBContext('r') as session:
             conditions = []
             conditions.append(AssetSql.id == int(storage))
@@ -478,8 +462,8 @@ class getimplementlist(BaseHandler):
             case_dict["totype"] = data_dict["totype"]
             case_dict["obj"] = data_dict["obj"]
             case_dict["department"] = data_dict["department"]
-            case_dict["storage"] = data_dict["storage"]  #cha xun
-            case_dict["storage2"] = data_dict["storage2"]  #shengcheng
+            case_dict["storage"] = data_dict["storage"]  # cha xun
+            case_dict["storage2"] = data_dict["storage2"]  # shengcheng
             case_dict["fieldlist"] = data_dict["fieldlist"]
             case_dict["fieldname"] = data_dict["fieldname"]
             case_dict["create_time"] = str(data_dict["create_time"])
@@ -496,133 +480,143 @@ class getimplementlist(BaseHandler):
                 case_dict = {}
                 data_dict = DB_model_to_dict(msg)
                 case_dict["id"] = data_dict["id"]
-                case_dict["db_instance"] = data_dict["db_instance"] #库名
+                case_dict["db_instance"] = data_dict["db_instance"]  # 库名
                 case_dict["db_host"] = data_dict["db_host"]
                 case_dict["db_port"] = data_dict["db_port"]
                 case_dict["db_user"] = data_dict["db_user"]
                 case_dict["db_pwd"] = data_dict["db_pwd"]
-                case_dict["db_type"] = data_dict["db_type"]  #oracle/mysql
+                case_dict["db_type"] = data_dict["db_type"]  # oracle/mysql
 
                 data_list2.append(case_dict)
-            if str(targetKeys) == "[]": #当用户没有选择字段时，默认查询所有字段
-               targetKeys = []
-               for j in  eval(str(data_list[0]["fieldlist"])):
-                    targetKeys.append(str(j["name"])) 
-            title_list = [] 
+            if str(targetKeys) == "[]":  # 当用户没有选择字段时，默认查询所有字段
+                targetKeys = []
+                for j in eval(str(data_list[0]["fieldlist"])):
+                    targetKeys.append(str(j["name"]))
+            title_list = []
             columns_list = []
             table_key = []
             key_list = eval(str(targetKeys))
-            for  h in eval(str(targetKeys)):
-                for j in  eval(str(data_list[0]["fieldlist"])):
-                   table_key.append(str(j["name"])) #获取表全部的字段
-                   if str(j["name"])  == str(h):
-                      columns_list.append({ "title": str(j["zh_name"]), "key": h,"width":150, "editable": "true" })
-                      title_list.append(str(j["zh_name"]))
-            #if len(columns_list) > 6:
+            for h in eval(str(targetKeys)):
+                for j in eval(str(data_list[0]["fieldlist"])):
+                    table_key.append(str(j["name"]))  # 获取表全部的字段
+                    if str(j["name"]) == str(h):
+                        columns_list.append({"title": str(j["zh_name"]), "key": h, "width": 150, "editable": "true"})
+                        title_list.append(str(j["zh_name"]))
+            # if len(columns_list) > 6:
             #       columns_list[0]["fixed"] = "left"
             #       columns_list[len(columns_list) -1]["fixed"] = "right" 
-            #拼接sql语句
-            #flag_date = 0 
-            #ins_log.read_log('info', "80xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx00")
-            #ins_log.read_log('info', targetKeys)
-            #ins_log.read_log('info', "800000000000000000000000000000000000")
-            #num_temp = len(eval(str(targetKeys)))
-            #sql_temp_str  = "select  "
-            #for  h in range(0,num_temp -1):
+            # 拼接sql语句
+            # flag_date = 0
+            # ins_log.read_log('info', "80xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx00")
+            # ins_log.read_log('info', targetKeys)
+            # ins_log.read_log('info', "800000000000000000000000000000000000")
+            # num_temp = len(eval(str(targetKeys)))
+            # sql_temp_str  = "select  "
+            # for  h in range(0,num_temp -1):
             #     sql_temp_str = sql_temp_str + eval(str(targetKeys))[h] + ",  " 
-            #sql_temp_str = sql_temp_str + str(eval(str(targetKeys))[num_temp -1])  +  "  from  "  +   str(data_list[0]["fieldname"])
-            #for  t in  eval(str(data_list[0]["fieldlist"])):
+            # sql_temp_str = sql_temp_str + str(eval(str(targetKeys))[num_temp -1])  +  "  from  "  +   str(data_list[0]["fieldname"])
+            # for  t in  eval(str(data_list[0]["fieldlist"])):
             #        if "BEGINDATE" == str(t["name"])  or  "ENDDATE"  == str(t["name"]):
             #            flag_date = 1
             #            sql_temp_str = sql_temp_str +   "  where  begindate>=to_date('sDate','yyyyMMdd')  and  enddate<=to_date('eDate','yyyyMMdd')"
             #        else:
             #            flag_date = 0
-            #temp_date_str = str(date).split('-')
-            #import calendar 
-            #tian_num = calendar.monthrange(int(temp_date_str[0]),int(temp_date_str[1]))[1] 
-            #start_temp_str = temp_date_str[0] + temp_date_str[1] +"01"
-            #end_temp_str = temp_date_str[0] + temp_date_str[1] + str(tian_num)
+            # temp_date_str = str(date).split('-')
+            # import calendar
+            # tian_num = calendar.monthrange(int(temp_date_str[0]),int(temp_date_str[1]))[1]
+            # start_temp_str = temp_date_str[0] + temp_date_str[1] +"01"
+            # end_temp_str = temp_date_str[0] + temp_date_str[1] + str(tian_num)
 
-            data_list3 =[]
-            CUSTOM_DB_INFO = dict( 
-                                host=data_list2[0]["db_host"],
-                                port=data_list2[0]["db_port"],
-                                user=data_list2[0]["db_user"],
-                                passwd=decrypt(data_list2[0]["db_pwd"]),
-                                db=data_list2[0]["db_instance"])
+            data_list3 = []
+            CUSTOM_DB_INFO = dict(
+                host=data_list2[0]["db_host"],
+                port=data_list2[0]["db_port"],
+                user=data_list2[0]["db_user"],
+                passwd=decrypt(data_list2[0]["db_pwd"]),
+                db=data_list2[0]["db_instance"])
             try:
-                 if data_list2[0]["db_type"]  == "mysql":
-                       mysql_conn = MysqlBase(**CUSTOM_DB_INFO)
-                       start_time = time.time()
-                       if  str(flag)  == "1":
-                             #db_data = mysql_conn.query(q_sqlstr)
-                             pass
-                       if  str(flag)  == "2":
-                             pass
-                       end_time = time.time()
-                       time_storage_str = str(int(end_time - start_time) / 60 / 60) + "小时" + str(int(end_time - start_time) / 60 % 60) + "分" + str(int(end_time - start_time) % 60) + "秒" + str(int((end_time - start_time) * 1000) % 1000) + "毫秒"
-                 if data_list2[0]["db_type"]  == "oracle":
-                       temp_str = data_list2[0]["db_host"] + '/' + data_list2[0]["db_instance"]
-                       oracle_conn = cx_Oracle.connect(data_list2[0]["db_user"],decrypt(data_list2[0]["db_pwd"]),temp_str) 
-                       cur = oracle_conn.cursor()
-                       temp_msg_code  = cur.var(cx_Oracle.STRING)
-                       temp_msg_remarks  = cur.var(cx_Oracle.STRING)
-                       msg_data  = cur.var(cx_Oracle.DB_TYPE_CURSOR)
-                       temp_parameter_list = [] 
-                       for n in  range(0,len(parameter)):
-                           for h in  parameter:
-                                if n  ==  int(h["toindex"]):
-                                     temp_parameter_list.append(str(h["msg"]))
-                       temp_parameter_list +=  [temp_msg_code,temp_msg_remarks,msg_data]
-                       ins_log.read_log('info', temp_parameter_list)
-                       temp_fieldlist_list5  =   eval(str(data_list[0]["fieldlist"]))
-                       temp_fieldlist_num  = len(temp_fieldlist_list5)
+                if data_list2[0]["db_type"] == "mysql":
+                    mysql_conn = MysqlBase(**CUSTOM_DB_INFO)
+                    start_time = time.time()
+                    if str(flag) == "1":
+                        # db_data = mysql_conn.query(q_sqlstr)
+                        pass
+                    if str(flag) == "2":
+                        pass
+                    end_time = time.time()
+                    time_storage_str = str(int(end_time - start_time) / 60 / 60) + "小时" + str(
+                        int(end_time - start_time) / 60 % 60) + "分" + str(int(end_time - start_time) % 60) + "秒" + str(
+                        int((end_time - start_time) * 1000) % 1000) + "毫秒"
+                if data_list2[0]["db_type"] == "oracle":
+                    temp_str = data_list2[0]["db_host"] + '/' + data_list2[0]["db_instance"]
+                    oracle_conn = cx_Oracle.connect(data_list2[0]["db_user"], decrypt(data_list2[0]["db_pwd"]),
+                                                    temp_str)
+                    cur = oracle_conn.cursor()
+                    temp_msg_code = cur.var(cx_Oracle.STRING)
+                    temp_msg_remarks = cur.var(cx_Oracle.STRING)
+                    msg_data = cur.var(cx_Oracle.DB_TYPE_CURSOR)
+                    temp_parameter_list = []
+                    for n in range(0, len(parameter)):
+                        for h in parameter:
+                            if n == int(h["toindex"]):
+                                temp_parameter_list.append(str(h["msg"]))
+                    temp_parameter_list += [temp_msg_code, temp_msg_remarks, msg_data]
+                    ins_log.read_log('info', temp_parameter_list)
+                    temp_fieldlist_list5 = eval(str(data_list[0]["fieldlist"]))
+                    temp_fieldlist_num = len(temp_fieldlist_list5)
 
-                       start_time =  time.time()
-                       #查询存储过程
-                       if str(flag) == "1":
-                           ins_log.read_log('info', data_list[0]["storage"])
-                           temp_table_data = cur.callproc(data_list[0]["storage"],temp_parameter_list)
-                       if str(flag) == "2":
-                           ins_log.read_log('info', data_list[0]["storage2"])
-                           temp_table_data = cur.callproc(data_list[0]["storage2"],temp_parameter_list)
-                           
-                       end_time =  time.time()
-                       time_storage_str = str(int(end_time - start_time)/60/60) +"小时" + str(int(end_time - start_time)/60%60)  + "分" +str(int(end_time - start_time)%60)  + "秒"  +  str(int((end_time - start_time)*1000)%1000)  + "毫秒"
-                       ins_log.read_log('info', "80xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx00")
-                       ins_log.read_log('info', end_time)
-                       ins_log.read_log('info', start_time)
-                       ins_log.read_log('info', end_time - start_time)
-                       ins_log.read_log('info', time_storage_str)
-                       ins_log.read_log('info', "800000000000000000000000000000000000")
-                       for  i in  msg_data.getvalue():
-                                len_num  =  len(i)
-                                temp_dict = {}
-                                for  n  in  range(0,temp_fieldlist_num):
-                                    if str(i[n]) == "None":
-                                       temp_dict[table_key[n]] = '' 
-                                    else:
-                                       temp_dict[table_key[n]] = str(i[n]) 
-                                data_list3.append(temp_dict)
-                       cur.close()
-                       oracle_conn.close()
+                    start_time = time.time()
+                    # 查询存储过程
+                    if str(flag) == "1":
+                        ins_log.read_log('info', data_list[0]["storage"])
+                        temp_table_data = cur.callproc(data_list[0]["storage"], temp_parameter_list)
+                    if str(flag) == "2":
+                        ins_log.read_log('info', data_list[0]["storage2"])
+                        temp_table_data = cur.callproc(data_list[0]["storage2"], temp_parameter_list)
+
+                    end_time = time.time()
+                    time_storage_str = str(int(end_time - start_time) / 60 / 60) + "小时" + str(
+                        int(end_time - start_time) / 60 % 60) + "分" + str(int(end_time - start_time) % 60) + "秒" + str(
+                        int((end_time - start_time) * 1000) % 1000) + "毫秒"
+                    ins_log.read_log('info', "80xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx00")
+                    ins_log.read_log('info', end_time)
+                    ins_log.read_log('info', start_time)
+                    ins_log.read_log('info', end_time - start_time)
+                    ins_log.read_log('info', time_storage_str)
+                    ins_log.read_log('info', "800000000000000000000000000000000000")
+                    for i in msg_data.getvalue():
+                        len_num = len(i)
+                        temp_dict = {}
+                        for n in range(0, temp_fieldlist_num):
+                            if str(i[n]) == "None":
+                                temp_dict[table_key[n]] = ''
+                            else:
+                                temp_dict[table_key[n]] = str(i[n])
+                        data_list3.append(temp_dict)
+                    cur.close()
+                    oracle_conn.close()
 
             except:
-                       traceback.print_exc()
- 
-            #ins_log.read_log('info', data_list3)
+                traceback.print_exc()
+
+            # ins_log.read_log('info', data_list3)
             if str(flag) == "1":
-                 update_storage(data_list[0]["storage"],time_storage_str)
+                update_storage(data_list[0]["storage"], time_storage_str)
             if str(flag) == "2":
-                 update_storage(data_list[0]["storage2"],time_storage_str)
-            data_list3 = [{"bianhao": "020", "number": "粵A88888","username": "張天浩", "sex": "男","iphone": "13100001235","chepinpai": "解放牌","type": "轎車","zhuangzailiang": "20頓"},
-                          {"bianhao": "020", "number": "粵A88888", "username": "張天磊", "sex": "男","iphone": "13100987635", "chepinpai": "解放牌", "type": "轎車", "zhuangzailiang": "20頓"},
-                          {"bianhao": "020", "number": "粵A88888", "username": "張天武", "sex": "男", "iphone": "13100123935", "chepinpai": "解放牌", "type": "轎車", "zhuangzailiang": "20頓"},
-                         ]
+                update_storage(data_list[0]["storage2"], time_storage_str)
+            data_list3 = [
+                {"bianhao": "020", "number": "粵A88888", "username": "張天浩", "sex": "男", "iphone": "13100001235",
+                 "chepinpai": "解放牌", "type": "轎車", "zhuangzailiang": "20頓"},
+                {"bianhao": "020", "number": "粵A88888", "username": "張天磊", "sex": "男", "iphone": "13100987635",
+                 "chepinpai": "解放牌", "type": "轎車", "zhuangzailiang": "20頓"},
+                {"bianhao": "020", "number": "粵A88888", "username": "張天武", "sex": "男", "iphone": "13100123935",
+                 "chepinpai": "解放牌", "type": "轎車", "zhuangzailiang": "20頓"},
+                ]
             if len(data_list3) > 0:
-               self.write(dict(code=0, msg='获取成功',  data=data_list3,columnslist = columns_list,titlelist=title_list,keylist= key_list))
+                self.write(dict(code=0, msg='获取成功', data=data_list3, columnslist=columns_list, titlelist=title_list,
+                                keylist=key_list))
         else:
-            self.write(dict(code=-1, msg='没有相关存储过程数据',data=[],columns_listb=[],titlelist=[],keylist=[]))
+            self.write(dict(code=-1, msg='没有相关存储过程数据', data=[], columns_listb=[], titlelist=[], keylist=[]))
 
 
 class getobjlist(BaseHandler):
@@ -635,83 +629,82 @@ class getobjlist(BaseHandler):
         department = self.get_argument('department', strip=True)
         with DBContext('r') as session:
             conditions = []
-            department = "'" + department +  "'"
+            department = "'" + department + "'"
             conditions.append(AssetSql.department.like('%{}%'.format(department)))
             conditions.append(AssetSql.totype == "存储过程")
             conditions.append(AssetSql.state == "运行")
             todata = session.query(AssetSql).filter(*conditions).all()
         for msg in todata:
-                case_dict = {}
-                data_dict = model_to_dict(msg)
-                case_dict["id"] = data_dict["id"]
-                case_dict["obj"] = data_dict["obj"]
-                case_dict["name"] = data_dict["name"]
-                case_dict["department"] = data_dict["department"]
-                case_dict["storage"] = data_dict["storage"]
-                case_dict["storage2"] = data_dict["storage2"]
-                case_dict["dictvalue"] = data_dict["dictvalue"]
-                case_dict["dictvalue2"] = data_dict["dictvalue2"]
-                case_dict["flag"] = data_dict["flag"]
-                case_dict["authorized"] = data_dict["authorized"]
-                case_dict["fieldlist"] = data_dict["fieldlist"]
-                case_dict["fieldname"] = data_dict["fieldname"]
-                if  case_dict["obj"] not  in  temp_list:
-                    temp_list.append(case_dict["obj"])
-                    data_list.append({"v":case_dict["obj"],"t":case_dict["flag"]})
-                data_list2.append(case_dict)
+            case_dict = {}
+            data_dict = model_to_dict(msg)
+            case_dict["id"] = data_dict["id"]
+            case_dict["obj"] = data_dict["obj"]
+            case_dict["name"] = data_dict["name"]
+            case_dict["department"] = data_dict["department"]
+            case_dict["storage"] = data_dict["storage"]
+            case_dict["storage2"] = data_dict["storage2"]
+            case_dict["dictvalue"] = data_dict["dictvalue"]
+            case_dict["dictvalue2"] = data_dict["dictvalue2"]
+            case_dict["flag"] = data_dict["flag"]
+            case_dict["authorized"] = data_dict["authorized"]
+            case_dict["fieldlist"] = data_dict["fieldlist"]
+            case_dict["fieldname"] = data_dict["fieldname"]
+            if case_dict["obj"] not in temp_list:
+                temp_list.append(case_dict["obj"])
+                data_list.append({"v": case_dict["obj"], "t": case_dict["flag"]})
+            data_list2.append(case_dict)
 
-        
-
-        for  i in temp_list:
-            temp_list2.append({"name":i,"date":[]})
-            temp_list3.append({"name":i,"date":[]})
-        for  j in    temp_list2:
-             for   d in  data_list2:
-                if    str(j["name"])   == str(d["obj"]):
-                    j["date"].append({"k":d["id"],"v":d["name"],"t":d["flag"],"s":d["storage"],"st":d["storage2"],"d":d["fieldlist"],"f":d["fieldname"],"c":d["dictvalue"]})
-        for  k  in   temp_list3:
-             for   d in  data_list2:
-                if    str(k["name"])   == str(d["obj"]):
-                    if  str(d["authorized"])  != "[]":
+        for i in temp_list:
+            temp_list2.append({"name": i, "date": []})
+            temp_list3.append({"name": i, "date": []})
+        for j in temp_list2:
+            for d in data_list2:
+                if str(j["name"]) == str(d["obj"]):
+                    j["date"].append(
+                        {"k": d["id"], "v": d["name"], "t": d["flag"], "s": d["storage"], "st": d["storage2"],
+                         "d": d["fieldlist"], "f": d["fieldname"], "c": d["dictvalue"]})
+        for k in temp_list3:
+            for d in data_list2:
+                if str(k["name"]) == str(d["obj"]):
+                    if str(d["authorized"]) != "[]":
                         authorized_temp_list = []
-                        for  a in  eval(str(d["authorized"])):
+                        for a in eval(str(d["authorized"])):
                             k["date"].append(a)
-        #ins_log.read_log('info', "800000000000000000000000000000000000")
-        #ins_log.read_log('info', temp_list3)
-        #ins_log.read_log('info', "800000000000000000000000000000000000")
+        # ins_log.read_log('info', "800000000000000000000000000000000000")
+        # ins_log.read_log('info', temp_list3)
+        # ins_log.read_log('info', "800000000000000000000000000000000000")
         temp_list_all = []
-        nickname = self.get_current_nickname() 
+        nickname = self.get_current_nickname()
         if self.is_superuser:
             pass
         else:
-            for  i  in  temp_list3:
-                 if  nickname  in  i['date']:
-                     for h  in  data_list:
-                          if i["name"] == h["v"]:
-                              temp_list_all.append(h)
+            for i in temp_list3:
+                if nickname in i['date']:
+                    for h in data_list:
+                        if i["name"] == h["v"]:
+                            temp_list_all.append(h)
             ins_log.read_log('info', "800000000000000000000000000000000000")
             ins_log.read_log('info', temp_list_all)
             ins_log.read_log('info', "800000000000000000000000000000000000")
-            data_list  =  temp_list_all
+            data_list = temp_list_all
 
         if len(data_list) > 0:
-            self.write(dict(code=0, msg='获取成功',  data=data_list,storagelist=temp_list2))
+            self.write(dict(code=0, msg='获取成功', data=data_list, storagelist=temp_list2))
         else:
             self.write(dict(code=-1, msg='没有相关数据', count=0, data=[]))
 
 
-
-def update_storage(name,time_str):
-        try:
-            with DBContext('w', None, True) as session:
-                session.query(Storage).filter(Storage.name == name).update({
-                    Storage.name: name,
-                    Storage.consume: time_str,
-                })
-                session.commit()
-        except Exception as e:
-            return self.write(dict(code=-2, msg='修改失败，请检查数据是否合法或者重复')) 
-        return  0
+def update_storage(name, time_str):
+    try:
+        with DBContext('w', None, True) as session:
+            session.query(Storage).filter(Storage.name == name).update({
+                Storage.name: name,
+                Storage.consume: time_str,
+            })
+            session.commit()
+    except Exception as e:
+        return self.write(dict(code=-2, msg='修改失败，请检查数据是否合法或者重复'))
+    return 0
 
 
 class getSqlobjlist(BaseHandler):
@@ -851,8 +844,8 @@ class getimplementlist2(BaseHandler):
             title_list = []
             columns_list = []
             table_key = []
-            key_list  =  temp_copy2
-            for  h in  temp_copy2:
+            key_list = temp_copy2
+            for h in temp_copy2:
                 columns_list.append({"title": h, "key": h, "width": 150, "editable": "true"})
                 title_list.append(str(h))
                 table_key.append(str(h))
@@ -903,7 +896,7 @@ class getimplementlist2(BaseHandler):
                     #     # db_data = mysql_conn.query(q_sqlstr)
                     #     pass
                     db_data = mysql_conn.query(data_list[0]["sqlstr"])
-                    for  i in  db_data:
+                    for i in db_data:
                         ins_log.read_log('info', "800000000000000000000000000000000000")
                         ins_log.read_log('info', i)
                         ins_log.read_log('info', "800000000000000000000000000000000000")
@@ -924,27 +917,28 @@ class getimplementlist2(BaseHandler):
                     #     int((end_time - start_time) * 1000) % 1000) + "毫秒"
                 if data_list2[0]["db_type"] == "oracle":
                     temp_str = data_list2[0]["db_host"] + '/' + data_list2[0]["db_instance"]
-                    oracle_conn = cx_Oracle.connect(data_list2[0]["db_user"], decrypt(data_list2[0]["db_pwd"]),temp_str)
+                    oracle_conn = cx_Oracle.connect(data_list2[0]["db_user"], decrypt(data_list2[0]["db_pwd"]),
+                                                    temp_str)
                     cur = oracle_conn.cursor()
                     db_data2 = cur.execute(data_list[0]["sqlstr"])
-                    table_colsname = cur.description #获取sql查询字段列表
+                    table_colsname = cur.description  # 获取sql查询字段列表
                     temp_table_key = [i[0] for i in table_colsname]
-                    if str(table_key)  == "['']":
-                          table_key = key_list =  columns_list = title_list = []
-                          table_key = temp_table_key
-                          temp_copy2 = temp_table_key
-                          key_list = temp_copy2
-                          for  h in temp_copy2:
-                              columns_list.append({"title":h,"key":h,"width":150,"editable":"true"})
-                              title_list.append(str(h))
+                    if str(table_key) == "['']":
+                        table_key = key_list = columns_list = title_list = []
+                        table_key = temp_table_key
+                        temp_copy2 = temp_table_key
+                        key_list = temp_copy2
+                        for h in temp_copy2:
+                            columns_list.append({"title": h, "key": h, "width": 150, "editable": "true"})
+                            title_list.append(str(h))
                     for i in db_data2:
                         len_num = len(i)
                         temp_dict = {}
-                        for  n  in  range(0,len(i)):
-                            if str(i[n])  == "None":
+                        for n in range(0, len(i)):
+                            if str(i[n]) == "None":
                                 temp_dict[table_key[n]] = ''
                             else:
-                                temp_dict[table_key[n]]  = str(i[n])
+                                temp_dict[table_key[n]] = str(i[n])
                         data_list3.append(temp_dict)
                     # temp_msg_code = cur.var(cx_Oracle.STRING)
                     # temp_msg_remarks = cur.var(cx_Oracle.STRING)
