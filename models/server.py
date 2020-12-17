@@ -259,8 +259,6 @@ class Facility(Base):
     remarks = Column('remarks', Text())
     create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间
 
-
-<<<<<<< HEAD
 class Storage(Base):
     __tablename__ = 'asset_storage'
     ### 存储过程列表
@@ -274,10 +272,6 @@ class Storage(Base):
     username = Column('username', String(200)) #创建人
     create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间
 
-
-
-
-
 class Record(Base):
     __tablename__ = 'asset_record'
     ### 模板列表
@@ -289,7 +283,6 @@ class Record(Base):
     tablename = Column('tablename', String(200))  # 数据表名
     number = Column('number', Integer) #模板使用次数
     create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间
-=======
 class ServerPerformance(Base):
     __tablename__ = 'asset_server_performance'
 
@@ -305,4 +298,3 @@ class ServerPerformance(Base):
     tcp_time_wait = Column('tcp_time_wait', Integer, default=0, comment="tcp time_wait")
     iowait = Column('iowait', String(50), default='', comment="表示CPU用于等待io请求的完成时间")
     create_time = Column('create_time', DateTime(), default=datetime.now)  # 记录时间
->>>>>>> 626e13e3e4f5b16f0adb71ddaa9c0671e04250b9
