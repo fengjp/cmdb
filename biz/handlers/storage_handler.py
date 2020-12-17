@@ -167,7 +167,7 @@ class Storage_Iddata(BaseHandler):
             data_list.append(temp_dict)
 
         if len(data_list) > 0  or len(data_list2) > 0 :
-            self.write(dict(code=0, msg='获取成功',  data=data_list))
+            self.write(dict(code=0, msg='获取成功!',  data=data_list))
         else:
             self.write(dict(code=-1, msg='没有相关数据', count=0, data=[]))
 
