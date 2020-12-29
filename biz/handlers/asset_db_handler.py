@@ -490,6 +490,7 @@ class TestHandler(BaseHandler):
         db_obj['port'] = int(data['db_port'])
         db_obj['user'] = data['db_user']
         db_obj['passwd'] = decrypt(data['db_pwd'])
+        db_obj['db'] = data['db_instance']
 
         try:
             if data['db_type'] == 'mysql':
