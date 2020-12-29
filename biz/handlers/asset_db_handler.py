@@ -11,6 +11,7 @@ from models.server import Tag, AssetOperationalAudit
 from websdk.db_context import DBContext
 from websdk.web_logs import ins_log
 from libs.mysql_conn import MysqlBase
+from libs.oracle_conn import OracleBase
 from settings import READONLY_DB_DBNAME
 from libs.aes_coder import encrypt, decrypt
 
@@ -481,11 +482,36 @@ class TreeHandler(BaseHandler):
         self.write(dict(code=0, msg='获取成功', data=_tree))
 
 
+class TestHandler(BaseHandler):
+    def post(self, *args, **kwargs):
+        data = json.loads(self.request.body.decode("utf-8"))
+        db_obj = {}
+        db_obj['host'] = data['db_host']
+        db_obj['port'] = int(data['db_port'])
+        db_obj['user'] = data['db_user']
+        db_obj['passwd'] = decrypt(data['db_pwd'])
+
+        try:
+            if data['db_type'] == 'mysql':
+                mysql_conn = MysqlBase(**db_obj)
+                res = mysql_conn.test()
+
+            elif data['db_type'] == 'oracle':
+                oracle_conn = OracleBase(**db_obj)
+                res = oracle_conn.test()
+
+        except Exception as e:
+            return self.write(dict(code=-1, msg='%s' % e))
+
+        return self.write(dict(code=0, msg='连接成功'))
+
+
 asset_db_urls = [
     (r"/v1/cmdb/db/", DBHandler),
     (r"/v1/cmdb/db/multi_add/", MultiAddDBHandler),
     (r"/v1/cmdb/db/forQry/", DBForQryHandler),
     (r"/v1/cmdb/db/tree/", TreeHandler),
+    (r"/v1/cmdb/db/test/", TestHandler),
 ]
 if __name__ == "__main__":
     pass
