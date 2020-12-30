@@ -683,9 +683,7 @@ class getobjlist(BaseHandler):
                     for h in data_list:
                         if i["name"] == h["v"]:
                             temp_list_all.append(h)
-            ins_log.read_log('info', "800000000000000000000000000000000000")
-            ins_log.read_log('info', temp_list_all)
-            ins_log.read_log('info', "800000000000000000000000000000000000")
+
             data_list = temp_list_all
 
         if len(data_list) > 0:
@@ -771,15 +769,88 @@ class getSqlobjlist(BaseHandler):
                     for h in data_list:
                         if i["name"] == h["v"]:
                             temp_list_all.append(h)
-            ins_log.read_log('info', "800000000000000000000000000000000000")
-            ins_log.read_log('info', temp_list_all)
-            ins_log.read_log('info', "800000000000000000000000000000000000")
+
             data_list = temp_list_all
 
         if len(data_list) > 0:
             self.write(dict(code=0, msg='获取成功', data=data_list, storagelist=temp_list2))
         else:
             self.write(dict(code=-1, msg='没有相关数据', count=0, data=[]))
+
+
+class Spoonobjlist(BaseHandler):
+    def get(self, *args, **kwargs):
+        data_list = []
+        data_list2 = []
+        temp_list = []
+        temp_list2 = []
+        temp_list3 = []
+        department = self.get_argument('department', strip=True)
+        with DBContext('r') as session:
+            conditions = []
+            department = "'" + department + "'"
+            conditions.append(AssetSql.department.like('%{}%'.format(department)))
+            conditions.append(AssetSql.totype == "自定义sql")
+            conditions.append(AssetSql.state == "运行")
+            todata = session.query(AssetSql).filter(*conditions).all()
+        for msg in todata:
+            case_dict = {}
+            data_dict = model_to_dict(msg)
+            case_dict["id"] = data_dict["id"]
+            case_dict["obj"] = data_dict["obj"]
+            case_dict["name"] = data_dict["name"]
+            case_dict["department"] = data_dict["department"]
+            case_dict["storage"] = data_dict["storage"]
+            case_dict["storage2"] = data_dict["storage2"]
+            case_dict["dictvalue"] = data_dict["dictvalue"]
+            case_dict["dictvalue2"] = data_dict["dictvalue2"]
+            case_dict["flag"] = data_dict["flag"]
+            case_dict["authorized"] = data_dict["authorized"]
+            case_dict["fieldlist"] = data_dict["fieldlist"]
+            case_dict["fieldname"] = data_dict["fieldname"]
+            if case_dict["obj"] not in temp_list:
+                temp_list.append(case_dict["obj"])
+                data_list.append({"v": case_dict["obj"], "t": case_dict["flag"]})
+            data_list2.append(case_dict)
+
+        for i in temp_list:
+            temp_list2.append({"name": i, "date": []})
+            temp_list3.append({"name": i, "date": []})
+        for j in temp_list2:
+            for d in data_list2:
+                if str(j["name"]) == str(d["obj"]):
+                    j["date"].append(
+                        {"k": d["id"], "v": d["name"], "t": d["flag"], "s": d["storage"], "st": d["storage2"],
+                         "d": d["fieldlist"], "f": d["fieldname"], "c": d["dictvalue"]})
+        for k in temp_list3:
+            for d in data_list2:
+                if str(k["name"]) == str(d["obj"]):
+                    if str(d["authorized"]) != "[]":
+                        authorized_temp_list = []
+                        for a in eval(str(d["authorized"])):
+                            k["date"].append(a)
+        # ins_log.read_log('info', "800000000000000000000000000000000000")
+        # ins_log.read_log('info', temp_list3)
+        # ins_log.read_log('info', "800000000000000000000000000000000000")
+        temp_list_all = []
+        nickname = self.get_current_nickname()
+        if self.is_superuser:
+            pass
+        else:
+            for i in temp_list3:
+                if nickname in i['date']:
+                    for h in data_list:
+                        if i["name"] == h["v"]:
+                            temp_list_all.append(h)
+
+            data_list = temp_list_all
+
+        if len(data_list) > 0:
+            self.write(dict(code=0, msg='获取成功', data=data_list, storagelist=temp_list2))
+        else:
+            self.write(dict(code=-1, msg='没有相关数据', count=0, data=[]))
+
+
 
 
 class getimplementlist2(BaseHandler):
@@ -896,10 +967,22 @@ class getimplementlist2(BaseHandler):
                     #     # db_data = mysql_conn.query(q_sqlstr)
                     #     pass
                     db_data = mysql_conn.query(data_list[0]["sqlstr"])
+
+                    table_colsname = mysql_conn.cur.description  # 获取sql查询字段列表
+                    temp_table_key = [i[0] for i in table_colsname]
+                    if str(table_key) == "['']":
+                        table_key =[]
+                        key_list = []
+                        columns_list = []
+                        title_list = []
+                        table_key = temp_table_key
+                        temp_copy2 = temp_table_key
+                        key_list = temp_copy2
+                        for h in temp_copy2:
+                            columns_list.append({"title": h, "key": h, "width": 150, "editable": "true"})
+                            title_list.append(str(h))
+
                     for i in db_data:
-                        ins_log.read_log('info', "800000000000000000000000000000000000")
-                        ins_log.read_log('info', i)
-                        ins_log.read_log('info', "800000000000000000000000000000000000")
                         len_num = len(i)
                         temp_dict = {}
                         for n in range(0, len(i)):
@@ -908,6 +991,7 @@ class getimplementlist2(BaseHandler):
                             else:
                                 temp_dict[table_key[n]] = str(i[n])
                         data_list3.append(temp_dict)
+
                     # if str(flag) == "2":
                     #     pass
 
@@ -1017,6 +1101,7 @@ assetSql_urls = [
     (r"/v1/sql/storagelist/", getstoragelist),
     (r"/v1/sql/objlist/", getobjlist),
     (r"/v1/sql/Sqlobjlist/", getSqlobjlist),
+    (r"/v1/sql/Spoonobjlist/", Spoonobjlist),
     (r"/v1/sql/implement/", getimplementlist),
     (r"/v1/sql/implement2/", getimplementlist2),
 ]
