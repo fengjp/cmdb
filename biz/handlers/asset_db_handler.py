@@ -489,8 +489,11 @@ class TestHandler(BaseHandler):
         db_obj['host'] = data['db_host']
         db_obj['port'] = int(data['db_port'])
         db_obj['user'] = data['db_user']
-        db_obj['passwd'] = decrypt(data['db_pwd'])
+        db_obj['passwd'] = data['db_pwd']
         db_obj['db'] = data['db_instance']
+
+        if len(data['db_pwd']) == 32:
+            db_obj['passwd'] = decrypt(data['db_pwd'])
 
         try:
             if data['db_type'] == 'mysql':
