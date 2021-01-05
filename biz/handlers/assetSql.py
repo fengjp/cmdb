@@ -1008,7 +1008,10 @@ class getimplementlist2(BaseHandler):
                     table_colsname = cur.description  # 获取sql查询字段列表
                     temp_table_key = [i[0] for i in table_colsname]
                     if str(table_key) == "['']":
-                        table_key = key_list = columns_list = title_list = []
+                        table_key = []
+                        key_list = []
+                        columns_list = []
+                        title_list = []
                         table_key = temp_table_key
                         temp_copy2 = temp_table_key
                         key_list = temp_copy2
@@ -1090,6 +1093,206 @@ class getimplementlist2(BaseHandler):
         else:
             self.write(dict(code=-1, msg='没有相关存储过程数据', data=[], columns_listb=[], titlelist=[], keylist=[]))
 
+class getimplementlist_spoon(BaseHandler):
+    def get(self, *args, **kwargs):
+        data_list = []
+        data_list2 = []
+        parameter = eval(self.get_argument('parameter', strip=True))  # 参数列表
+        storage = self.get_argument('storage', strip=True)  # 存储过程id
+        targetKeys = self.get_argument('targetKeys', strip=True)  # 需要查询的字段列表
+        todate = self.get_argument('todate', strip=True)  # 需要查询的字段列表
+        with DBContext('r') as session:
+            conditions = []
+            conditions.append(AssetSql.id == int(storage))
+            todata = session.query(AssetSql).filter(*conditions).all()
+
+        for msg in todata:
+            case_dict = {}
+            data_dict = model_to_dict(msg)
+            case_dict["id"] = data_dict["id"]
+            case_dict["name"] = data_dict["name"]
+            case_dict["header"] = data_dict["header"]
+            case_dict["dbname_id"] = data_dict["dbname_id"]
+            case_dict["dbname"] = data_dict["dbname"]
+            case_dict["sqlstr"] = data_dict["sqlstr"]
+            case_dict["totype"] = data_dict["totype"]
+            case_dict["obj"] = data_dict["obj"]
+            case_dict["department"] = data_dict["department"]
+            case_dict["storage"] = data_dict["storage"]  # cha xun
+            case_dict["storage2"] = data_dict["storage2"]  # shengcheng
+            case_dict["fieldlist"] = data_dict["fieldlist"]
+            case_dict["fieldname"] = data_dict["fieldname"]
+            case_dict["create_time"] = str(data_dict["create_time"])
+            data_list.append(case_dict)
+
+        if len(data_list) > 0:
+
+            with DBContext('r') as session:
+                conditions = []
+                conditions.append(DB.id == int(data_list[0]["dbname_id"]))
+                DB_data = session.query(DB).filter(*conditions).all()
+
+            for msg in DB_data:
+                case_dict = {}
+                data_dict = DB_model_to_dict(msg)
+                case_dict["id"] = data_dict["id"]
+                case_dict["db_instance"] = data_dict["db_instance"]  # 库名
+                case_dict["db_host"] = data_dict["db_host"]
+                case_dict["db_port"] = data_dict["db_port"]
+                case_dict["db_user"] = data_dict["db_user"]
+                case_dict["db_pwd"] = data_dict["db_pwd"]
+                case_dict["db_type"] = data_dict["db_type"]  # oracle/mysql
+
+                data_list2.append(case_dict)
+            if str(targetKeys) == "[]":  # 当用户没有选择字段时，默认查询所有字段
+                targetKeys = []
+                for j in eval(str(data_list[0]["fieldlist"])):
+                    targetKeys.append(str(j["name"]))
+            title_list = []
+            columns_list = []
+            table_key = []
+            key_list = eval(str(targetKeys))
+            for h in eval(str(targetKeys)):
+                for j in eval(str(data_list[0]["fieldlist"])):
+                    table_key.append(str(j["name"]))  # 获取表全部的字段
+                    if str(j["name"]) == str(h):
+                        columns_list.append({"title": str(j["zh_name"]), "key": h, "width": 150, "editable": "true"})
+                        title_list.append(str(j["zh_name"]))
+            # if len(columns_list) > 6:
+            #       columns_list[0]["fixed"] = "left"
+            #       columns_list[len(columns_list) -1]["fixed"] = "right"
+            # 拼接sql语句
+            flag_date = 0
+
+            num_temp = len(eval(str(targetKeys)))
+            sql_temp_str  = "select  "
+            for  h in range(0,num_temp -1):
+                sql_temp_str = sql_temp_str + eval(str(targetKeys))[h] + ",  "
+            sql_temp_str = sql_temp_str + str(eval(str(targetKeys))[num_temp -1])  +  "  from  "  +   str(data_list[0]["fieldname"])
+            for  t in  eval(str(data_list[0]["fieldlist"])):
+                   if "BEGINDATE" == str(t["name"])  or  "ENDDATE"  == str(t["name"]):
+                       flag_date = 1
+                       sql_temp_str = sql_temp_str +   "  where  begindate>=to_date('sDate','yyyyMMdd')  and  enddate<=to_date('eDate','yyyyMMdd')"
+                       sql_temp_str.replace('sDate',todate["startdate"])
+                       sql_temp_str.replace('eDate', todate["enddate"])
+                   else:
+                       flag_date = 0
+
+            ins_log.read_log('info', "80xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx00")
+            ins_log.read_log('info', todate)
+            ins_log.read_log('info', sql_temp_str)
+            ins_log.read_log('info', "800000000000000000000000000000000000")
+
+            # temp_date_str = str(todate).split('-')
+            # import calendar
+            # tian_num = calendar.monthrange(int(temp_date_str[0]),int(temp_date_str[1]))[1]
+            # start_temp_str = temp_date_str[0] + temp_date_str[1] +"01"
+            # end_temp_str = temp_date_str[0] + temp_date_str[1] + str(tian_num)
+
+            data_list3 = []
+            CUSTOM_DB_INFO = dict(
+                host=data_list2[0]["db_host"],
+                port=data_list2[0]["db_port"],
+                user=data_list2[0]["db_user"],
+                passwd=decrypt(data_list2[0]["db_pwd"]),
+                db=data_list2[0]["db_instance"])
+            try:
+                if data_list2[0]["db_type"] == "mysql":
+                    mysql_conn = MysqlBase(**CUSTOM_DB_INFO)
+                    start_time = time.time()
+                    # if str(flag) == "1":
+                    #     # db_data = mysql_conn.query(q_sqlstr)
+                    #     pass
+                    # if str(flag) == "2":
+                    #     pass
+                    end_time = time.time()
+                    time_storage_str = str(int(end_time - start_time) / 60 / 60) + "小时" + str(
+                        int(end_time - start_time) / 60 % 60) + "分" + str(int(end_time - start_time) % 60) + "秒" + str(
+                        int((end_time - start_time) * 1000) % 1000) + "毫秒"
+                if data_list2[0]["db_type"] == "oracle":
+                    temp_str = data_list2[0]["db_host"] + '/' + data_list2[0]["db_instance"]
+                    oracle_conn = cx_Oracle.connect(data_list2[0]["db_user"], decrypt(data_list2[0]["db_pwd"]),
+                                                    temp_str)
+                    cur = oracle_conn.cursor()
+                    cur.execute(sql_temp_str)
+                    temp_str_date = cur.fetchall()
+                    #temp_msg_code = cur.var(cx_Oracle.STRING)
+                    #temp_msg_remarks = cur.var(cx_Oracle.STRING)
+                    #msg_data = cur.var(cx_Oracle.DB_TYPE_CURSOR)
+                    #temp_parameter_list = []
+                    #for n in range(0, len(parameter)):
+                    #    for h in parameter:
+                     #       if n == int(h["toindex"]):
+                    #           temp_parameter_list.append(str(h["msg"]))
+                    #temp_parameter_list += [temp_msg_code, temp_msg_remarks, msg_data]
+                    #ins_log.read_log('info', temp_parameter_list)
+                    temp_fieldlist_list5 = eval(str(data_list[0]["fieldlist"]))
+                    temp_fieldlist_num = len(temp_fieldlist_list5)
+
+                    start_time = time.time()
+                    # 查询存储过程
+                    # if str(flag) == "1":
+                    #     ins_log.read_log('info', data_list[0]["storage"])
+                    #     temp_table_data = cur.callproc(data_list[0]["storage"], temp_parameter_list)
+                    # if str(flag) == "2":
+                    #     ins_log.read_log('info', data_list[0]["storage2"])
+                    #     temp_table_data = cur.callproc(data_list[0]["storage2"], temp_parameter_list)
+
+                    end_time = time.time()
+                    time_storage_str = str(int(end_time - start_time) / 60 / 60) + "小时" + str(
+                        int(end_time - start_time) / 60 % 60) + "分" + str(int(end_time - start_time) % 60) + "秒" + str(
+                        int((end_time - start_time) * 1000) % 1000) + "毫秒"
+                    ins_log.read_log('info', "80xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx00")
+                    ins_log.read_log('info', end_time)
+                    ins_log.read_log('info', start_time)
+                    ins_log.read_log('info', end_time - start_time)
+                    ins_log.read_log('info', time_storage_str)
+                    ins_log.read_log('info', "800000000000000000000000000000000000")
+                    # for i in msg_data.getvalue():
+                    #     len_num = len(i)
+                    #     temp_dict = {}
+                    #     for n in range(0, temp_fieldlist_num):
+                    #         if str(i[n]) == "None":
+                    #             temp_dict[table_key[n]] = ''
+                    #         else:
+                    #             temp_dict[table_key[n]] = str(i[n])
+                    #     data_list3.append(temp_dict)
+                    for i in  temp_str_date:
+                        len_num = len(i)
+                        temp_dict = {}
+                        for n in range(0, temp_fieldlist_num):
+                            if str(i[n]) == "None":
+                                temp_dict[table_key[n]] = ''
+                            else:
+                                temp_dict[table_key[n]] = str(i[n])
+                        data_list3.append(temp_dict)
+                    cur.close()
+                    oracle_conn.close()
+
+            except:
+                traceback.print_exc()
+
+            # ins_log.read_log('info', data_list3)
+            # if str(flag) == "1":
+            #     update_storage(data_list[0]["storage"], time_storage_str)
+            # if str(flag) == "2":
+            #     update_storage(data_list[0]["storage2"], time_storage_str)
+            data_list3 = [
+                {"bianhao": "020", "number": "粵A88888", "username": "張天浩", "sex": "男", "iphone": "13100001235",
+                 "chepinpai": "解放牌", "type": "轎車", "zhuangzailiang": "20頓"},
+                {"bianhao": "020", "number": "粵A88888", "username": "張天磊", "sex": "男", "iphone": "13100987635",
+                 "chepinpai": "解放牌", "type": "轎車", "zhuangzailiang": "20頓"},
+                {"bianhao": "020", "number": "粵A88888", "username": "張天武", "sex": "男", "iphone": "13100123935",
+                 "chepinpai": "解放牌", "type": "轎車", "zhuangzailiang": "20頓"},
+                ]
+            if len(data_list3) > 0:
+                self.write(dict(code=0, msg='获取成功', data=data_list3, columnslist=columns_list, titlelist=title_list,
+                                keylist=key_list))
+        else:
+            self.write(dict(code=-1, msg='没有相关存储过程数据', data=[], columns_listb=[], titlelist=[], keylist=[]))
+
+
+
 
 assetSql_urls = [
     (r"/v1/sql/add/", SqlListHandler),
@@ -1104,6 +1307,7 @@ assetSql_urls = [
     (r"/v1/sql/Spoonobjlist/", Spoonobjlist),
     (r"/v1/sql/implement/", getimplementlist),
     (r"/v1/sql/implement2/", getimplementlist2),
+    (r"/v1/sql/implement_spoon/", getimplementlist_spoon),
 ]
 
 if __name__ == "__main__":

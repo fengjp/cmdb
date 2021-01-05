@@ -135,6 +135,7 @@ class StorageHandler(BaseHandler):
         if  tocount2:
             with DBContext('w', None, True) as session:
                 session.query(AssetSql).filter(AssetSql.storage2 == name).update({
+                    AssetSql.dictvalue2: dictvalue,
 
                 })
                 session.commit()
