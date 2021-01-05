@@ -16,6 +16,7 @@ from websdk.tools import convert
 from websdk.web_logs import ins_log
 import os
 import pandas as pd
+from models.server import AssetSql
 
 
 class StorageHandler(BaseHandler):
@@ -115,6 +116,28 @@ class StorageHandler(BaseHandler):
                 session.commit()
         except Exception as e:
             return self.write(dict(code=-2, msg='修改失败，请检查数据是否合法或者重复'))
+
+        with DBContext('r') as session:
+            conditions = []
+            conditions.append(AssetSql.storage == name)
+            tocount = session.query(AssetSql).filter(*conditions).count()
+        if  tocount:
+            with DBContext('w', None, True) as session:
+                session.query(AssetSql).filter(AssetSql.storage == name).update({
+                    AssetSql.dictvalue: dictvalue,
+
+                })
+                session.commit()
+        with DBContext('r') as session:
+            conditions = []
+            conditions.append(AssetSql.storage2 == name)
+            tocount2 = session.query(AssetSql).filter(*conditions).count()
+        if  tocount2:
+            with DBContext('w', None, True) as session:
+                session.query(AssetSql).filter(AssetSql.storage2 == name).update({
+
+                })
+                session.commit()
         self.write(dict(code=0, msg='编辑成功'))
 
 
